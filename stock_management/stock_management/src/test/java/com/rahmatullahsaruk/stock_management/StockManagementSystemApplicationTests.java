@@ -1,10 +1,10 @@
-package com.emranhss.inventorypart;
+package com.rahmatullahsaruk.stock_management;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MerchandiseInventorySectionApplicationTests {
+class StockManagementSystemApplicationTests {
 
 	@Test
 	void contextLoads() {

@@ -1,13 +1,13 @@
-package com.emranhss.inventorypart;
+package com.rahmatullahsaruk.stock_management;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class MerchandiseInventorySectionApplication {
+public class StockManagementSystemApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(MerchandiseInventorySectionApplication.class, args);
+		SpringApplication.run(StockManagementSystemApplication.class, args);
 	}
 
 }
