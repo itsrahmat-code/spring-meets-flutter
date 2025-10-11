@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:date_field/date_field.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,266 +10,104 @@ import 'package:merchandise_management_system/service/authservice.dart';
 import 'package:radio_group_v2/radio_group_v2.dart';
 import 'package:radio_group_v2/radio_group_v2.dart' as v2;
 
-
 class Manager extends StatefulWidget {
   const Manager({super.key});
 
   @override
-  State<Manager> createState() => _RegistrationState();
+  State<Manager> createState() => _ManagerState();
 }
 
-class _RegistrationState extends State<Manager> {
+class _ManagerState extends State<Manager> {
+  final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
-  final TextEditingController name = TextEditingController();
-  final TextEditingController email = TextEditingController();
-  final TextEditingController password = TextEditingController();
 
-  final TextEditingController confirmPassword = TextEditingController();
-  final TextEditingController cell = TextEditingController();
-  final TextEditingController address = TextEditingController();
+  // Controllers
+  final name = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
+  final confirmPassword = TextEditingController();
+  final cell = TextEditingController();
+  final address = TextEditingController();
 
-  final RadioGroupController genderController = RadioGroupController();
-  final DateTimeFieldPickerPlatform dob = DateTimeFieldPickerPlatform.material;
+  final genderController = RadioGroupController();
+  final picker = ImagePicker();
 
   String? selectedGender;
   DateTime? selectedDOB;
 
   XFile? selectedImage;
   Uint8List? webImage;
-  final ImagePicker _picker = ImagePicker();
 
-  final _formkey = GlobalKey<FormState>();
+  final dobPickerPlatform = DateTimeFieldPickerPlatform.material;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Manager Registration'),
+        title: const Text('Manager Registration'),
         centerTitle: true,
         backgroundColor: Colors.blue,
-        // Optional: add action buttons here if you want
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              accountName: Text(name.text.isEmpty ? 'Guest User' : name.text),
-              accountEmail: Text(email.text.isEmpty ? 'guest@example.com' : email.text),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                backgroundImage: (kIsWeb && webImage != null)
-                    ? MemoryImage(webImage!)
-                    : (!kIsWeb && selectedImage != null)
-                    ? FileImage(File(selectedImage!.path)) as ImageProvider
-                    : null,
-                child: (webImage == null && selectedImage == null)
-                    ? Icon(Icons.person, size: 50, color: Colors.grey)
-                    : null,
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.home),
-              title: Text('Home'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to Home page or any action
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text('Profile'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to Profile page or any action
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Settings'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to Settings page or any action
-              },
-            ),
-            Divider(),
-            ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Logout'),
-              onTap: () {
-                Navigator.pop(context);
-                // Perform logout operation
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Form(
-            key: _formkey,
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(height: 20),
-                TextField(
-                  controller: name,
-                  decoration: InputDecoration(
-                    labelText: "Full Name",
+                _buildTextInput(name, "Full Name", Icons.person),
+                const SizedBox(height: 16),
+                _buildTextInput(email, "Email", Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: _validateEmail),
+                const SizedBox(height: 16),
+                _buildPasswordInput(password, "Password"),
+                const SizedBox(height: 16),
+                _buildPasswordInput(confirmPassword, "Confirm Password"),
+                const SizedBox(height: 16),
+                _buildTextInput(cell, "Cell Number", Icons.phone,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+                const SizedBox(height: 16),
+                _buildTextInput(address, "Address", Icons.place),
+                const SizedBox(height: 16),
+                DateTimeFormField(
+                  decoration: const InputDecoration(
+                    labelText: "Date of Birth",
                     border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                    prefixIcon: Icon(Icons.calendar_today),
                   ),
-                  onChanged: (_) {
-                    setState(() {}); // To refresh Drawer header with name change
+                  mode: DateTimeFieldPickerMode.date,
+                  pickerPlatform: dobPickerPlatform,
+                  onChanged: (value) {
+                    selectedDOB = value;
                   },
                 ),
-                SizedBox(height: 20),
-                TextField(
-                  controller: email,
-                  decoration: InputDecoration(
-                    labelText: "example@gmail.com",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email_outlined),
+                const SizedBox(height: 16),
+                _buildGenderRadio(),
+                const SizedBox(height: 16),
+                _buildImageUploadButton(),
+                const SizedBox(height: 12),
+                _buildImagePreview(),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  onChanged: (_) {
-                    setState(() {}); // To refresh Drawer header with email change
-                  },
-                ),
-                SizedBox(height: 20),
-                TextField(
-                  obscureText: _obscurePassword,
-                  controller: password,
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.password),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                  child: Text(
+                    "Register",
+                    style: GoogleFonts.lato(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
-                TextField(
-                  controller: confirmPassword,
-                  decoration: InputDecoration(
-                    labelText: "Confirm Password",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                  obscureText: true,
-                ),
-                SizedBox(height: 20),
-                TextField(
-                  controller: cell,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: "Cell Number",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone_android_outlined),
-                  ),
-                ),
-                SizedBox(height: 20),
-                TextField(
-                  controller: address,
-                  decoration: InputDecoration(
-                    labelText: "Dhaka",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.place),
-                  ),
-                ),
-                SizedBox(height: 20),
-                DateTimeFormField(
-                  decoration: const InputDecoration(labelText: "Date of Birth"),
-                  mode: DateTimeFieldPickerMode.date,
-                  pickerPlatform: dob,
-                  onChanged: (DateTime? value) {
-                    setState(() {
-                      selectedDOB = value;
-                    });
-                  },
-                ),
-                SizedBox(height: 20),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Gender:",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      v2.RadioGroup(
-                        controller: genderController,
-                        values: ["Male", "Female", "Other"],
-                        indexOfDefault: 0,
-                        orientation: RadioGroupOrientation.vertical,
-                        onChanged: (newValue) {
-                          setState(() {
-                            selectedGender = newValue.toString();
-                          });
-                        },
-                      ),
-                      SizedBox(height: 20),
-                      TextButton.icon(
-                        icon: Icon(Icons.image),
-                        label: Text('Upload Image'),
-                        onPressed: () {
-                          pickImage();
-                        },
-                      ),
-                      // display selected image preview
-                      if (kIsWeb && webImage != null)
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Image.memory(
-                            webImage!,
-                            height: 100,
-                            width: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      else if (!kIsWeb && selectedImage != null)
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.file(
-                            File(selectedImage!.path),
-                            height: 100,
-                            width: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () {
-                          _register();
-                        },
-                        child: Text(
-                          "Registration",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontFamily: GoogleFonts.lato().fontFamily,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: 20.0),
-                    ],
-                  ),
-                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -279,105 +116,221 @@ class _RegistrationState extends State<Manager> {
     );
   }
 
+  // ====================
+  // === WIDGET HELPERS ==
+  // ====================
+
+  Widget _buildTextInput(
+      TextEditingController controller,
+      String label,
+      IconData icon, {
+        TextInputType keyboardType = TextInputType.text,
+        List<TextInputFormatter>? inputFormatters,
+        String? Function(String?)? validator,
+      }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (_) => setState(() {}),
+    );
+  }
+
+  Widget _buildPasswordInput(TextEditingController controller, String label) {
+    return TextFormField(
+      controller: controller,
+      obscureText: _obscurePassword,
+      validator: (value) =>
+      value == null || value.isEmpty ? "Required field" : null,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.lock),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscurePassword = !_obscurePassword;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenderRadio() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Gender", style: TextStyle(fontWeight: FontWeight.bold)),
+        v2.RadioGroup(
+          controller: genderController,
+          values: const ["Male", "Female", "Other"],
+          indexOfDefault: 0,
+          orientation: RadioGroupOrientation.horizontal,
+          onChanged: (value) {
+            selectedGender = value.toString();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageUploadButton() {
+    return TextButton.icon(
+      onPressed: pickImage,
+      icon: const Icon(Icons.image),
+      label: const Text("Upload Image"),
+    );
+  }
+
+  Widget _buildImagePreview() {
+    if (kIsWeb && webImage != null) {
+      return Image.memory(webImage!, height: 100, width: 100, fit: BoxFit.cover);
+    } else if (!kIsWeb && selectedImage != null) {
+      return Image.file(File(selectedImage!.path),
+          height: 100, width: 100, fit: BoxFit.cover);
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          UserAccountsDrawerHeader(
+            accountName:
+            Text(name.text.isEmpty ? 'Guest User' : name.text),
+            accountEmail:
+            Text(email.text.isEmpty ? 'guest@example.com' : email.text),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              backgroundImage: (kIsWeb && webImage != null)
+                  ? MemoryImage(webImage!)
+                  : (!kIsWeb && selectedImage != null)
+                  ? FileImage(File(selectedImage!.path))
+                  : null,
+              child: (webImage == null && selectedImage == null)
+                  ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                  : null,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.home),
+            title: const Text('Home'),
+            onTap: () => Navigator.pop(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Profile'),
+            onTap: () => Navigator.pop(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () => Navigator.pop(context),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            onTap: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ======================
+  // === FUNCTION HELPERS ==
+  // ======================
+
   Future<void> pickImage() async {
     if (kIsWeb) {
-      // for web: use image_picker_web to pick image and store as bytes
-      var pickedImage = await ImagePickerWeb.getImageAsBytes();
-      if (pickedImage != null) {
-        setState(() {
-          webImage = pickedImage;
-        });
+      final imageBytes = await ImagePickerWeb.getImageAsBytes();
+      if (imageBytes != null) {
+        setState(() => webImage = imageBytes);
       }
     } else {
-      // for Mobile: use image_picker to pick image
-      final XFile? pickedImage = await _picker.pickImage(
-        source: ImageSource.gallery,
-      );
-      if (pickedImage != null) {
-        setState(() {
-          selectedImage = pickedImage;
-        });
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() => selectedImage = pickedFile);
       }
     }
   }
 
-
-  /// Method to handle Admin registration
-
   void _register() async {
-    if(_formkey.currentState!.validate()) {
-      if(password.text != confirmPassword.text) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Password does not match!')),
-        );
-        return;
-      }
-    }
-    if(kIsWeb) {
-      if(webImage ==null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please select an image')),
-        );
-        return;
-      }
-    }
-    else{
-      if(selectedImage == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please Select an image')),
-        );
-        return;
-      }
-    }
-    final user = {
-      "name" : name.text,
-      "email" : email.text,
-      "phone" : cell.text,
-      "password" : password.text
+    if (!_formKey.currentState!.validate()) return;
 
+    if (password.text != confirmPassword.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match!')),
+      );
+      return;
+    }
+
+    if ((kIsWeb && webImage == null) ||
+        (!kIsWeb && selectedImage == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an image')),
+      );
+      return;
+    }
+
+    final user = {
+      "name": name.text,
+      "email": email.text,
+      "phone": cell.text,
+      "password": password.text
     };
+
     final manager = {
       "name": name.text,
       "email": email.text,
       "phone": cell.text,
       "gender": selectedGender ?? "Other",
-      // fallback if null
       "address": address.text,
-      "dateOfBirth": selectedDOB?.toIso8601String()?? "",
+      "dateOfBirth": selectedDOB?.toIso8601String() ?? "",
     };
-    final apiService = AuthService();
 
+    final apiService = AuthService();
     bool success = false;
 
-    // ekhane error
     if (kIsWeb && webImage != null) {
-      // For Web → send photo as bytes
       success = await apiService.registerManagerWeb(
         user: user,
         manager: manager,
-        photoBytes: webImage!, // safe to use ! because already checked above
+        photoBytes: webImage!,
       );
     } else if (selectedImage != null) {
-      // For Mobile → send photo as file
       success = await apiService.registerManagerWeb(
         user: user,
         manager: manager,
-        photoFile: File(selectedImage!
-            .path), // safe to use ! because already checked above
+        photoFile: File(selectedImage!.path),
       );
     }
-    if(success) {
+
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration Successful')),
+        const SnackBar(content: Text('Registration Successful')),
       );
-
     }
-
   }
 
-
-
-
-
-
-
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) return 'Email required';
+    final emailRegex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+    if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
+    return null;
+  }
 }

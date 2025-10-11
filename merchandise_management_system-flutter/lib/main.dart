@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
-
+import 'package:merchandise_management_system/pages/registration_page.dart';
+import 'package:merchandise_management_system/pages/welcome_page.dart';
+import 'package:merchandise_management_system/pages/manager_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -9,13 +11,16 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const WelcomePage(),
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const Manager(), // Registration screen
+      },
     );
   }
 }
-

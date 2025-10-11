@@ -6,105 +6,141 @@ import 'package:merchandise_management_system/service/admin_service.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
 import 'package:merchandise_management_system/service/manager_service.dart';
 
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
-class LoginPage extends StatelessWidget {
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
-  bool _obscurePassword = true;
+  final storage = FlutterSecureStorage();
 
-  final storage = new FlutterSecureStorage();
-  AuthService authService = AuthService();
-  ManagerService managerService = ManagerService();
-  AdminService adminService = AdminService();
+  bool _obscurePassword = true;
+  final authService = AuthService();
+  final managerService = ManagerService();
+  final adminService = AdminService();
+
+  @override
+  void dispose() {
+    email.dispose();
+    password.dispose();
+    super.dispose();
+  }
+
+  Future<void> loginUser() async {
+    try {
+      final response = await authService.login(email.text, password.text);
+      final role = await authService.getUserRole();
+
+      if (role == 'ADMIN') {
+        final profile = await adminService.getAdminProfile();
+        if (profile != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AdminPage(profile: profile)),
+          );
+        }
+      } else if (role == 'MANAGER') {
+        final profile = await managerService.getManagerProfile();
+        if (profile != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ManagerPage(profile: profile)),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid role detected')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login Failed: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.all(16.00),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: email,
-              decoration: InputDecoration(
-                labelText: "example@gamil.com",
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email_rounded),
-              ),
+      body: Stack(
+        children: [
+          /// Background Image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/img/i.png', // 👈 Your background image path
+              fit: BoxFit.cover,
             ),
-            SizedBox(height: 20),
-            TextField(
-              controller: password,
-              decoration: InputDecoration(
-                labelText: "password",
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.password),
-              ),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                loginUser(context);
-              },
-              child: Text(
-                "Login",
-                style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w800),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent,
-                foregroundColor: Colors.orangeAccent,
-              ),
-            ),
-            SizedBox(height: 20),
+          ),
 
-          ],
-        ),
+          /// Foreground content
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Card(
+                color: Colors.white.withOpacity(0.85),
+                elevation: 8,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Login",
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: email,
+                        decoration: const InputDecoration(
+                          labelText: "example@gmail.com",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.email_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: password,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: "Password",
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.lock),
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: loginUser,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurpleAccent,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        child: const Text(
+                          "Login",
+                          style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  Future<void> loginUser(BuildContext context) async {
-    try {
-      final response = await authService.login(email.text, password.text);
-
-      // Successful login , role-based navigation
-      final role = await authService.getUserRole();
-      if (role == 'ADMIN') {
-        final profile = await adminService
-            .getAdminProfile();
-        if(profile != null){
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AdminPage(profile: profile),
-            ),
-          );
-
-        } else {
-          print('Unknown role: $role');
-        }
-      } else if (role == 'MANAGER') {
-        final profile = await managerService
-            .getManagerProfile();
-        if(profile != null){
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ManagerPage(profile: profile),
-            ),
-          );
-
-        } else {
-          print('Unknown role: $role');
-        }
-
-      }
-    }
-
-    catch (error) {
-      print('Login Failed: $error');
-    }
   }
 }
