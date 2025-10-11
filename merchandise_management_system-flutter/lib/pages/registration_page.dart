@@ -1,26 +1,26 @@
 import 'dart:io';
+
 import 'package:date_field/date_field.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_web/image_picker_web.dart';
+import 'package:merchandise_management_system/service/authservice.dart';
 import 'package:radio_group_v2/radio_group_v2.dart';
 import 'package:radio_group_v2/radio_group_v2.dart' as v2;
 
-import '../service/authservice.dart';
-import 'login_page.dart';
 
-class Registration extends StatefulWidget {
-  const Registration({super.key});
+class Manager extends StatefulWidget {
+  const Manager({super.key});
 
   @override
-  State<Registration> createState() => _RegistrationState();
+  State<Manager> createState() => _RegistrationState();
 }
 
-class _RegistrationState extends State<Registration> {
+class _RegistrationState extends State<Manager> {
   bool _obscurePassword = true;
-
   final TextEditingController name = TextEditingController();
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
@@ -30,34 +30,90 @@ class _RegistrationState extends State<Registration> {
   final TextEditingController address = TextEditingController();
 
   final RadioGroupController genderController = RadioGroupController();
-
   final DateTimeFieldPickerPlatform dob = DateTimeFieldPickerPlatform.material;
 
   String? selectedGender;
-
   DateTime? selectedDOB;
 
   XFile? selectedImage;
-
   Uint8List? webImage;
-
   final ImagePicker _picker = ImagePicker();
 
-  final _formKey = GlobalKey<FormState>();
+  final _formkey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
+      appBar: AppBar(
+        title: Text('Manager Registration'),
+        centerTitle: true,
+        backgroundColor: Colors.blue,
+        // Optional: add action buttons here if you want
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            UserAccountsDrawerHeader(
+              accountName: Text(name.text.isEmpty ? 'Guest User' : name.text),
+              accountEmail: Text(email.text.isEmpty ? 'guest@example.com' : email.text),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                backgroundImage: (kIsWeb && webImage != null)
+                    ? MemoryImage(webImage!)
+                    : (!kIsWeb && selectedImage != null)
+                    ? FileImage(File(selectedImage!.path)) as ImageProvider
+                    : null,
+                child: (webImage == null && selectedImage == null)
+                    ? Icon(Icons.person, size: 50, color: Colors.grey)
+                    : null,
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.home),
+              title: Text('Home'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to Home page or any action
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to Profile page or any action
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to Settings page or any action
+              },
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text('Logout'),
+              onTap: () {
+                Navigator.pop(context);
+                // Perform logout operation
+              },
+            ),
+          ],
+        ),
+      ),
+      body: SafeArea(
         child: SingleChildScrollView(
+          padding: EdgeInsets.all(16.0),
           child: Form(
-            key: _formKey,
+            key: _formkey,
             child: Column(
-              // crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                SizedBox(height: 20),
                 TextField(
                   controller: name,
                   decoration: InputDecoration(
@@ -65,29 +121,30 @@ class _RegistrationState extends State<Registration> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.person),
                   ),
+                  onChanged: (_) {
+                    setState(() {}); // To refresh Drawer header with name change
+                  },
                 ),
-
-                SizedBox(height: 20.0),
-
+                SizedBox(height: 20),
                 TextField(
                   controller: email,
                   decoration: InputDecoration(
-                    labelText: "Email",
+                    labelText: "example@gmail.com",
                     border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.alternate_email),
+                    prefixIcon: Icon(Icons.email_outlined),
                   ),
+                  onChanged: (_) {
+                    setState(() {}); // To refresh Drawer header with email change
+                  },
                 ),
-
-                SizedBox(height: 20.0),
-
+                SizedBox(height: 20),
                 TextField(
                   obscureText: _obscurePassword,
                   controller: password,
                   decoration: InputDecoration(
-                    labelText: 'Password ',
+                    labelText: "Password",
                     border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
-
+                    prefixIcon: Icon(Icons.password),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -102,145 +159,116 @@ class _RegistrationState extends State<Registration> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 20),
                 TextField(
                   controller: confirmPassword,
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password ',
+                    labelText: "Confirm Password",
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lock),
                   ),
                   obscureText: true,
                 ),
-
                 SizedBox(height: 20),
                 TextField(
                   controller: cell,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
-                    labelText: 'Cell Number',
+                    labelText: "Cell Number",
                     border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone),
+                    prefixIcon: Icon(Icons.phone_android_outlined),
                   ),
                 ),
                 SizedBox(height: 20),
                 TextField(
                   controller: address,
                   decoration: InputDecoration(
-                    labelText: 'Address',
+                    labelText: "Dhaka",
                     border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.maps_home_work_rounded),
+                    prefixIcon: Icon(Icons.place),
                   ),
                 ),
                 SizedBox(height: 20),
-
                 DateTimeFormField(
-                  decoration: const InputDecoration(labelText: 'Date of Birth'),
-
+                  decoration: const InputDecoration(labelText: "Date of Birth"),
                   mode: DateTimeFieldPickerMode.date,
                   pickerPlatform: dob,
-
                   onChanged: (DateTime? value) {
                     setState(() {
                       selectedDOB = value;
                     });
                   },
                 ),
-
                 SizedBox(height: 20),
-
-                // Gender Selection
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Gender:",
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       v2.RadioGroup(
                         controller: genderController,
-                        values: const ["Male", "Female", "Other"],
-                        indexOfDefault: 2,
-                        orientation: RadioGroupOrientation.horizontal,
+                        values: ["Male", "Female", "Other"],
+                        indexOfDefault: 0,
+                        orientation: RadioGroupOrientation.vertical,
                         onChanged: (newValue) {
                           setState(() {
                             selectedGender = newValue.toString();
                           });
                         },
                       ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 20.0),
-
-
-                TextButton.icon(
-                  icon: Icon(Icons.image),
-                  label: Text('Upload Image'),
-                  onPressed: pickImage,
-                ),
-                // Display selected image preview
-                if (kIsWeb && webImage != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Image.memory(
-                      webImage!,
-                      height: 100,
-                      width: 100,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                else
-                  if (!kIsWeb && selectedImage != null)
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Image.file(
-                        File(selectedImage!.path),
-                        height: 100,
-                        width: 100,
-                        fit: BoxFit.cover,
+                      SizedBox(height: 20),
+                      TextButton.icon(
+                        icon: Icon(Icons.image),
+                        label: Text('Upload Image'),
+                        onPressed: () {
+                          pickImage();
+                        },
                       ),
-
-                    ),
-
-
-
-                SizedBox(height: 20.0),
-
-                ElevatedButton(
-                  onPressed: () {
-                    _register();
-                  },
-                  child: Text(
-                    "Registration",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontFamily: GoogleFonts.lato().fontFamily,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 20.0),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginPage()),
-                    );
-                  },
-                  child: Text(
-                    'Login',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline,
-                    ),
+                      // display selected image preview
+                      if (kIsWeb && webImage != null)
+                        Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Image.memory(
+                            webImage!,
+                            height: 100,
+                            width: 100,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      else if (!kIsWeb && selectedImage != null)
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.file(
+                            File(selectedImage!.path),
+                            height: 100,
+                            width: 100,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          _register();
+                        },
+                        child: Text(
+                          "Registration",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontFamily: GoogleFonts.lato().fontFamily,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 20.0),
+                    ],
                   ),
                 ),
               ],
@@ -251,22 +279,20 @@ class _RegistrationState extends State<Registration> {
     );
   }
 
-
-
-
   Future<void> pickImage() async {
     if (kIsWeb) {
-      // For Web: Use image_picker_web to pick image and store as bytes
+      // for web: use image_picker_web to pick image and store as bytes
       var pickedImage = await ImagePickerWeb.getImageAsBytes();
       if (pickedImage != null) {
         setState(() {
-          webImage = pickedImage; // Store the picked image as Uint8List
+          webImage = pickedImage;
         });
       }
     } else {
-      // For Mobile: Use image_picker to pick image
-      final XFile? pickedImage =
-      await _picker.pickImage(source: ImageSource.gallery);
+      // for Mobile: use image_picker to pick image
+      final XFile? pickedImage = await _picker.pickImage(
+        source: ImageSource.gallery,
+      );
       if (pickedImage != null) {
         setState(() {
           selectedImage = pickedImage;
@@ -276,177 +302,81 @@ class _RegistrationState extends State<Registration> {
   }
 
 
+  /// Method to handle Admin registration
 
-  // void _register() async {
-  //   if (_formKey.currentState!.validate()) {
-  //     if (password.text != confirmPassword.text) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text('Passwords do not match!')),
-  //       );
-  //       return;
-  //     }
-  //
-  //     // Validate image selection
-  //     if (kIsWeb) {
-  //       if (webImage == null) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(content: Text('Please select an image.')),
-  //         );
-  //         return;
-  //       }
-  //     } else {
-  //       if (selectedImage == null) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(content: Text('Please select an image.')),
-  //         );
-  //         return;
-  //       }
-  //     }
-  //
-  //     final user = {
-  //       "name": name.text,
-  //       "email": email.text,
-  //       "phone": cell.text,
-  //       "password": password.text,
-  //     };
-  //
-  //     final jobSeeker = {
-  //       "name": name.text,
-  //       "email": email.text,
-  //       "phone": cell.text,
-  //       "gender": selectedGender ?? "Other",
-  //       "address": address.text,
-  //       "dateOfBirth": selectedDOB?.toIso8601String() ?? "",
-  //     };
-  //
-  //     final apiService = AuthService();
-  //     bool success = false;
-  //
-  //     if (kIsWeb && webImage != null) {
-  //       success = await apiService.registerJobSeekerWeb(
-  //         user: user,
-  //         jobSeeker: jobSeeker,
-  //         photoBytes: webImage!, // safe because checked above
-  //       );
-  //     } else if (selectedImage != null) {
-  //       success = await apiService.registerJobSeekerWeb(
-  //         user: user,
-  //         jobSeeker: jobSeeker,
-  //         photoFile: File(selectedImage!.path), // safe because checked above
-  //       );
-  //     }
-  //
-  //     if (success) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text('Registration Successful')),
-  //       );
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => LoginPage()),
-  //       );
-  //     } else {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text('Registration Failed')),
-  //       );
-  //     }
-  //   }
-  // }
-
-
-  /// Method to handle Job Seeker registration
   void _register() async {
-    // ✅ Check if the form (text fields) is valid
-    if (_formKey.currentState!.validate()) {
-      // ✅ Check if password and confirm password match
-      if (password.text != confirmPassword.text) {
-        // Show an error message if passwords don’t match
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Passwords do not match!')),
+    if(_formkey.currentState!.validate()) {
+      if(password.text != confirmPassword.text) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Password does not match!')),
         );
-        return; // stop further execution
-      }
-
-      // ✅ Validate that the user has selected an image
-      if (kIsWeb) {
-        // On Web → check if webImage (Uint8List) is selected
-        if (webImage == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please select an image.')),
-          );
-          return; // stop further execution
-        }
-      } else {
-        // On Mobile/Desktop → check if image file is selected
-        if (selectedImage == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please select an image.')),
-          );
-          return; // stop further execution
-        }
-      }
-
-      // ✅ Prepare User object (basic login info)
-      final user = {
-        "name": name.text,
-        "email": email.text,
-        "phone": cell.text,
-        "password": password.text,
-      };
-
-      // ✅ Prepare JobSeeker object (extra personal info)
-      final jobSeeker = {
-        "name": name.text,
-        "email": email.text,
-        "phone": cell.text,
-        "gender": selectedGender ?? "Other",
-        // fallback if null
-        "address": address.text,
-        "dateOfBirth": selectedDOB?.toIso8601String() ?? "",
-        // convert DateTime to ISO string
-      };
-
-      // ✅ Initialize your API Service
-      final apiService = AuthService();
-
-      // ✅ Track API call success or failure
-      bool success = false;
-
-      // ✅ Send registration request (different handling for Web vs Mobile)
-      if (kIsWeb && webImage != null) {
-        // For Web → send photo as bytes
-        success = await apiService.registerJobSeekerWeb(
-          user: user,
-          jobSeeker: jobSeeker,
-          photoBytes: webImage!, // safe to use ! because already checked above
-        );
-      } else if (selectedImage != null) {
-        // For Mobile → send photo as file
-        success = await apiService.registerJobSeekerWeb(
-          user: user,
-          jobSeeker: jobSeeker,
-          photoFile: File(selectedImage!
-              .path), // safe to use ! because already checked above
-        );
-      }
-
-      // ✅ Handle the API response
-      if (success) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration Successful')),
-        );
-
-        // Redirect user to Login Page after successful registration
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-        );
-      } else {
-        // Show error message if regi
-
+        return;
       }
     }
+    if(kIsWeb) {
+      if(webImage ==null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please select an image')),
+        );
+        return;
+      }
+    }
+    else{
+      if(selectedImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please Select an image')),
+        );
+        return;
+      }
+    }
+    final user = {
+      "name" : name.text,
+      "email" : email.text,
+      "phone" : cell.text,
+      "password" : password.text
+
+    };
+    final manager = {
+      "name": name.text,
+      "email": email.text,
+      "phone": cell.text,
+      "gender": selectedGender ?? "Other",
+      // fallback if null
+      "address": address.text,
+      "dateOfBirth": selectedDOB?.toIso8601String()?? "",
+    };
+    final apiService = AuthService();
+
+    bool success = false;
+
+    // ekhane error
+    if (kIsWeb && webImage != null) {
+      // For Web → send photo as bytes
+      success = await apiService.registerManagerWeb(
+        user: user,
+        manager: manager,
+        photoBytes: webImage!, // safe to use ! because already checked above
+      );
+    } else if (selectedImage != null) {
+      // For Mobile → send photo as file
+      success = await apiService.registerManagerWeb(
+        user: user,
+        manager: manager,
+        photoFile: File(selectedImage!
+            .path), // safe to use ! because already checked above
+      );
+    }
+    if(success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registration Successful')),
+      );
+
+    }
+
   }
+
+
+
+
 
 
 
