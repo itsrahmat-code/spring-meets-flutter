@@ -1,26 +1,24 @@
-
 import 'dart:io';
-import 'dart:nativewrappers/_internal/vm/lib/typed_data_patch.dart';
-
 import 'package:date_field/date_field.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_web/image_picker_web.dart';
-import 'package:radio_group_v2/widgets/view_models/radio_group_controller.dart';
-import 'package:radio_group_v2/widgets/views/radio_group.dart';
-import 'package:radio_group_v2/widgets/views/radio_group.dart' as v2;
+import 'package:radio_group_v2/radio_group_v2.dart';
+import 'package:radio_group_v2/radio_group_v2.dart' as v2;
 
+import '../service/authservice.dart';
 import 'login_page.dart';
 
-class RegistrationPage extends StatelessWidget {
-  const RegistrationPage({super.key});
+class Registration extends StatefulWidget {
+  const Registration({super.key});
+
   @override
-  State<RegistrationPage> createState() => _RegistrationState();
+  State<Registration> createState() => _RegistrationState();
 }
 
-class _RegistrationState extends State<RegistrationPage> {
+class _RegistrationState extends State<Registration> {
   bool _obscurePassword = true;
 
   final TextEditingController name = TextEditingController();
@@ -43,7 +41,7 @@ class _RegistrationState extends State<RegistrationPage> {
 
   Uint8List? webImage;
 
-  final  ImagePicker_picker = ImagePicker();
+  final ImagePicker _picker = ImagePicker();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -277,6 +275,84 @@ class _RegistrationState extends State<RegistrationPage> {
     }
   }
 
+
+
+  // void _register() async {
+  //   if (_formKey.currentState!.validate()) {
+  //     if (password.text != confirmPassword.text) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Passwords do not match!')),
+  //       );
+  //       return;
+  //     }
+  //
+  //     // Validate image selection
+  //     if (kIsWeb) {
+  //       if (webImage == null) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Please select an image.')),
+  //         );
+  //         return;
+  //       }
+  //     } else {
+  //       if (selectedImage == null) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Please select an image.')),
+  //         );
+  //         return;
+  //       }
+  //     }
+  //
+  //     final user = {
+  //       "name": name.text,
+  //       "email": email.text,
+  //       "phone": cell.text,
+  //       "password": password.text,
+  //     };
+  //
+  //     final jobSeeker = {
+  //       "name": name.text,
+  //       "email": email.text,
+  //       "phone": cell.text,
+  //       "gender": selectedGender ?? "Other",
+  //       "address": address.text,
+  //       "dateOfBirth": selectedDOB?.toIso8601String() ?? "",
+  //     };
+  //
+  //     final apiService = AuthService();
+  //     bool success = false;
+  //
+  //     if (kIsWeb && webImage != null) {
+  //       success = await apiService.registerJobSeekerWeb(
+  //         user: user,
+  //         jobSeeker: jobSeeker,
+  //         photoBytes: webImage!, // safe because checked above
+  //       );
+  //     } else if (selectedImage != null) {
+  //       success = await apiService.registerJobSeekerWeb(
+  //         user: user,
+  //         jobSeeker: jobSeeker,
+  //         photoFile: File(selectedImage!.path), // safe because checked above
+  //       );
+  //     }
+  //
+  //     if (success) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Registration Successful')),
+  //       );
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => LoginPage()),
+  //       );
+  //     } else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Registration Failed')),
+  //       );
+  //     }
+  //   }
+  // }
+
+
   /// Method to handle Job Seeker registration
   void _register() async {
     // ✅ Check if the form (text fields) is valid
@@ -318,7 +394,7 @@ class _RegistrationState extends State<RegistrationPage> {
       };
 
       // ✅ Prepare JobSeeker object (extra personal info)
-      final employee = {
+      final jobSeeker = {
         "name": name.text,
         "email": email.text,
         "phone": cell.text,
@@ -330,7 +406,7 @@ class _RegistrationState extends State<RegistrationPage> {
       };
 
       // ✅ Initialize your API Service
-      // final apiService = AuthService();
+      final apiService = AuthService();
 
       // ✅ Track API call success or failure
       bool success = false;
@@ -340,14 +416,14 @@ class _RegistrationState extends State<RegistrationPage> {
         // For Web → send photo as bytes
         success = await apiService.registerJobSeekerWeb(
           user: user,
-          employee: employee,
+          jobSeeker: jobSeeker,
           photoBytes: webImage!, // safe to use ! because already checked above
         );
       } else if (selectedImage != null) {
         // For Mobile → send photo as file
         success = await apiService.registerJobSeekerWeb(
           user: user,
-          employee: employee,
+          jobSeeker: jobSeeker,
           photoFile: File(selectedImage!
               .path), // safe to use ! because already checked above
         );
