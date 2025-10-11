@@ -66,11 +66,10 @@ import java.util.List;
 
 
                                     "/api/employee",
-                                    "/api/employee/**",
+                                    "/api/employee/**"
                               ,
                                     "/api/manager",
-                                    "/api/manager/**",
-
+                                    "/api/manager/**"
                             ).permitAll()
 
 
