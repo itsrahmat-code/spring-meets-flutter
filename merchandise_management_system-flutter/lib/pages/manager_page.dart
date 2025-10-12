@@ -1,57 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
-
 
 class ManagerPage extends StatelessWidget {
   final Map<String, dynamic> profile;
   final AuthService _authService = AuthService();
 
-
   ManagerPage({Key? key, required this.profile}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // ----------------------------
-    // BASE URL for loading images
-    // ----------------------------
-    final String baseUrl =
-        "http://localhost:8085/images/roleManager/";
+    final String baseUrl = "http://localhost:8085/images/roleManager/";
     final String? photoName = profile['photo'];
-    final String? photoUrl = (photoName != null && photoName.isNotEmpty)
-        ? "$baseUrl$photoName"
-        : null;
+    final String? photoUrl =
+    (photoName != null && photoName.isNotEmpty) ? "$baseUrl$photoName" : null;
 
-    // ----------------------------
-    // SCAFFOLD: Main screen layout
-    // ----------------------------
+    final int id = profile['id'] ?? 0;
+    final String name = profile['name'] ?? 'N/A';
+    final String email = profile['email'] ?? 'N/A';
+    final String phone = profile['phone'] ?? 'N/A';
+    final String gender = profile['gender'] ?? 'N/A';
+    final String address = profile['address'] ?? 'N/A';
+    final String dateOfBirth = profile['dateOfBirth'] != null
+        ? _formatDate(profile['dateOfBirth'])
+        : 'N/A';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Manager Profile',
-          style: TextStyle(color: Colors.orangeAccent),
+          style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.black12,
+        backgroundColor: Colors.deepPurpleAccent,
         centerTitle: true,
         elevation: 4,
       ),
-
-      // ----------------------------
-      // DRAWER: Side navigation menu
-      // ----------------------------
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // 🟣 Drawer Header with user info
             UserAccountsDrawerHeader(
               decoration: const BoxDecoration(color: Colors.deepPurpleAccent),
               accountName: Text(
-                profile['name'] ?? 'Unknown User',
+                name,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              accountEmail: Text(profile['user']?['email'] ?? 'N/A'),
+              accountEmail: Text(email),
               currentAccountPicture: CircleAvatar(
                 backgroundImage: (photoUrl != null)
                     ? NetworkImage(photoUrl)
@@ -59,88 +54,42 @@ class ManagerPage extends StatelessWidget {
                 as ImageProvider,
               ),
             ),
-            // 🟣 Menu Items (you can add more later)
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('My Profile'),
-              onTap: () async{
+              onTap: () {
                 Navigator.pop(context);
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('View Buyer'),
-              onTap: () async {
-                // calling for navigate page here
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Save Cut Bundle'),
-              onTap: () async {
-
-                // evabe navigate korte hbe
-
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => CutBundlePageSave(),
-                //   ),
-                // );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('View Cut Bundle'),
-              onTap: () async {
-              // calling page navigate here
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('View Cutting Plans'),
-              onTap: () async {
-
-              },
-            ),
             const Divider(),
-
-            // 🔴 Logout Option
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.deepOrange),
               title: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.deepOrange)
+                'Logout',
+                style: TextStyle(color: Colors.deepOrange),
               ),
               onTap: () async {
                 await _authService.logout();
-                Navigator.push(context,
+                Navigator.pushAndRemoveUntil(
+                  context,
                   MaterialPageRoute(builder: (_) => LoginPage()),
+                      (route) => false,
                 );
               },
-
-
             ),
-
-
-
           ],
         ),
       ),
-
-      // ----------------------------
-      // BODY: Main content area
-      // ----------------------------
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Avatar with border and shadow
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black26,
                     blurRadius: 8,
@@ -148,24 +97,104 @@ class ManagerPage extends StatelessWidget {
                   ),
                 ],
                 border: Border.all(
-                  color: Colors.green,
+                  color: Colors.deepPurple,
                   width: 3,
                 ),
               ),
               child: CircleAvatar(
-                radius: 60, // image size
+                radius: 60,
                 backgroundColor: Colors.grey[200],
                 backgroundImage: (photoUrl != null)
-                    ? NetworkImage(photoUrl) // from backend
+                    ? NetworkImage(photoUrl)
                     : const AssetImage('assets/default_avatar.png')
                 as ImageProvider,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
+            // Name and Email
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              email,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+
+            // Info card
+            Card(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              elevation: 3,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0, vertical: 16.0),
+                child: Column(
+                  children: [
+                    _buildInfoRow(Icons.badge, "ID", id.toString()),
+                    _buildInfoRow(Icons.phone, "Phone", phone),
+                    _buildInfoRow(Icons.person, "Gender", gender),
+                    _buildInfoRow(Icons.home, "Address", address),
+                    _buildInfoRow(Icons.cake, "Date of Birth", dateOfBirth),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.deepPurple),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Text(
+              "$label:",
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(dynamic date) {
+    try {
+      DateTime parsedDate;
+      if (date is String) {
+        parsedDate = DateTime.parse(date);
+      } else if (date is DateTime) {
+        parsedDate = date;
+      } else {
+        return 'Invalid date';
+      }
+      return DateFormat('yyyy-MM-dd').format(parsedDate);
+    } catch (e) {
+      return 'Invalid date';
+    }
   }
 }

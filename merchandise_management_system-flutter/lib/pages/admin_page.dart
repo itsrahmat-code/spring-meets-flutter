@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
 
@@ -16,35 +17,37 @@ class AdminPage extends StatelessWidget {
         ? "$baseUrl$photoName"
         : null;
 
+    final int id = profile['id'] ?? 0;
+    final String name = profile['name'] ?? 'N/A';
+    final String email = profile['email'] ?? 'N/A';
+    final String phone = profile['phone'] ?? 'N/A';
+    final String gender = profile['gender'] ?? 'N/A';
+    final String address = profile['address'] ?? 'N/A';
+    final String dateOfBirth = profile['dateOfBirth'] != null
+        ? _formatDate(profile['dateOfBirth'])
+        : 'N/A';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Admin Dashboard',
-          style: TextStyle(color: Colors.white),
+          'Admin Profile',
+          style: TextStyle(color: Colors.orangeAccent),
         ),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.black12,
         centerTitle: true,
-        elevation: 2,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context); // ✅ Back button logic
-          },
-        ),
+        elevation: 4,
       ),
-
       drawer: Drawer(
-        child: Column(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(
-                color: Colors.deepPurpleAccent,
-              ),
+              decoration: const BoxDecoration(color: Colors.deepPurpleAccent),
               accountName: Text(
-                profile['name'] ?? 'Unknown User',
+                name,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              accountEmail: Text(profile['user']?['email'] ?? 'N/A'),
+              accountEmail: Text(email),
               currentAccountPicture: CircleAvatar(
                 backgroundImage: (photoUrl != null)
                     ? NetworkImage(photoUrl)
@@ -52,76 +55,41 @@ class AdminPage extends StatelessWidget {
                 as ImageProvider,
               ),
             ),
-
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildDrawerItem(
-                    icon: Icons.person,
-                    title: 'My Profile',
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.group,
-                    title: 'View Buyers',
-                    onTap: () {
-                      // TODO: Navigate to View Buyers
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.add_box,
-                    title: 'Save Cut Bundle',
-                    onTap: () {
-                      // TODO: Navigate to Save Cut Bundle
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.list_alt,
-                    title: 'View Cut Bundle',
-                    onTap: () {
-                      // TODO: Navigate to View Cut Bundle
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.cut,
-                    title: 'View Cutting Plans',
-                    onTap: () {
-                      // TODO: Navigate to View Cutting Plans
-                    },
-                  ),
-                  const Divider(),
-                  _buildDrawerItem(
-                    icon: Icons.logout,
-                    title: 'Logout',
-                    iconColor: Colors.deepOrange,
-                    textColor: Colors.deepOrange,
-                    onTap: () async {
-                      await _authService.logout();
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => LoginPage()),
-                            (route) => false,
-                      );
-                    },
-                  ),
-                ],
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.deepOrange),
+              title: const Text(
+                'Logout',
+                style: TextStyle(color: Colors.deepOrange),
               ),
+              onTap: () async {
+                await _authService.logout();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => LoginPage()),
+                      (route) => false,
+                );
+              },
             ),
           ],
         ),
       ),
-
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 🟣 Profile Photo
+            // Avatar with border
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.deepPurple, width: 3),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black26,
@@ -129,6 +97,10 @@ class AdminPage extends StatelessWidget {
                     offset: Offset(0, 5),
                   ),
                 ],
+                border: Border.all(
+                  color: Colors.deepPurple,
+                  width: 3,
+                ),
               ),
               child: CircleAvatar(
                 radius: 60,
@@ -141,9 +113,9 @@ class AdminPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // 🟣 Admin Name
+            // Name and Email
             Text(
-              profile['name'] ?? 'Admin Name',
+              name,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -151,44 +123,30 @@ class AdminPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-
-            // 🟣 Email
             Text(
-              profile['user']?['email'] ?? 'admin@example.com',
+              email,
               style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
+            const SizedBox(height: 24),
 
-            const SizedBox(height: 30),
-
-            // 🟣 Section Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Admin Tools',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.deepPurple,
+            // Info card
+            Card(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              elevation: 3,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0, vertical: 16.0),
+                child: Column(
+                  children: [
+                    _buildInfoRow(Icons.badge, "ID", id.toString()),
+                    _buildInfoRow(Icons.phone, "Phone", phone),
+                    _buildInfoRow(Icons.person, "Gender", gender),
+                    _buildInfoRow(Icons.home, "Address", address),
+                    _buildInfoRow(Icons.cake, "Date of Birth", dateOfBirth),
+                  ],
                 ),
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // 🔧 Action Buttons (Optional Future Use)
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                _buildActionButton('View Buyers', Icons.group),
-                _buildActionButton('Save Bundle', Icons.save),
-                _buildActionButton('Cutting Plans', Icons.cut),
-              ],
             ),
           ],
         ),
@@ -196,40 +154,48 @@ class AdminPage extends StatelessWidget {
     );
   }
 
-  // 🔹 Reusable Drawer Item
-  Widget _buildDrawerItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    Color iconColor = Colors.black87,
-    Color textColor = Colors.black,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(
-        title,
-        style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.deepPurple),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Text(
+              "$label:",
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ],
       ),
-      onTap: onTap,
     );
   }
 
-  // 🔹 Optional Action Buttons in main body (can link to features)
-  Widget _buildActionButton(String label, IconData icon) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        // TODO: Define action
-      },
-      icon: Icon(icon, color: Colors.white),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+  String _formatDate(dynamic date) {
+    try {
+      DateTime parsedDate;
+      if (date is String) {
+        parsedDate = DateTime.parse(date);
+      } else if (date is DateTime) {
+        parsedDate = date;
+      } else {
+        return 'Invalid date';
+      }
+      return DateFormat('yyyy-MM-dd').format(parsedDate);
+    } catch (e) {
+      return 'Invalid date';
+    }
   }
 }

@@ -68,9 +68,13 @@ class WelcomePage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Login',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.blueGrey.shade800, // ✅ fixed here
+                      ),
                     ),
                   ),
                 ),
@@ -96,7 +100,7 @@ class WelcomePage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: primaryColor,
+                        color: Colors.blueGrey.shade800, // ✅ also correct
                       ),
                     ),
                   ),
