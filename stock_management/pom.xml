@@ -112,8 +112,18 @@
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- for bar code -->
 
-
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.0</version>
+        </dependency>
 
 
 	</dependencies>

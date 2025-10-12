@@ -52,9 +52,6 @@ import java.util.List;
                                     "/api/admin/reg/**",
                                     "/api/cashier",
                                     "/api/cashier/**",
-
-                                    "/api/cashier/reg",
-                                    "/api/cashier/reg/**",
                                     "/api/cashier/profile",
                                     "/api/cashier/profile/**",
                                     "/api/manager/reg",
@@ -63,13 +60,14 @@ import java.util.List;
                                     "/api/manager/profile/**",
                                     "/images",
                                     "/images/**",
-
-
                                     "/api/employee",
-                                    "/api/employee/**"
-                              ,
                                     "/api/manager",
-                                    "/api/manager/**"
+                                    "/api/manager/**",
+                                    "/api/invoice",
+                                    "/api/invoice/**",
+                                    "/api/product",
+                                    "/api/product/**"
+
                             ).permitAll()
 
 
