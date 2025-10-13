@@ -50,7 +50,7 @@ public class ProductController {
                     product.setProductName(productDetails.getProductName());
                     product.setDescription(productDetails.getDescription());
                     product.setPrice(productDetails.getPrice());
-
+                    product.setQuantity(productDetails.getQuantity());
                     Product updatedProduct = productRepo.save(product);
                     return ResponseEntity.ok(updatedProduct);
                 })

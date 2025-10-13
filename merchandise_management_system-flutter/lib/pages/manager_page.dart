@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
+import 'package:merchandise_management_system/product/add_product_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
+
+import '../product/product_list_screen.dart';
+// TODO: Import your product pages here
+// import 'add_product_page.dart';
+// import 'product_list_page.dart';
 
 class ManagerPage extends StatelessWidget {
   final Map<String, dynamic> profile;
@@ -146,6 +152,47 @@ class ManagerPage extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // Product Action Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Navigate to Add Product Page
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductPage()));
+                  },
+                  icon: Icon(Icons.add),
+                  label: Text("Add Product"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Navigate to Product List Page
+                     Navigator.push(context, MaterialPageRoute(builder: (_) => ProductListScreen()));
+                  },
+                  icon: Icon(Icons.list),
+                  label: Text("Product List"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

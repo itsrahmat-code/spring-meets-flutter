@@ -21,40 +21,60 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/auth/**",
-            "/api/admin/**",
-            "/api/cashier/**",
-            "/api/manager/**",
-            "/api/invoice/**",
-            "/api/product/**",
-            "/images/**",
-            "/api/employee"
-    };
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthFilter jwtAuthFilter,
                                            UserService userService) throws Exception {
 
-        http
+        return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest().authenticated()
+                .authorizeHttpRequests(req -> req
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/logout",
+                                "/api/auth/active/**",
+                                "/api/auth/all",
+                                "/api/admin/**",
+                                "/api/cashier/**",
+                                "/api/category/**",
+                                "/api/customer/**",
+                                "/api/employee/**",
+                                "/api/brand/**",
+                                "/api/goods/**",
+                                "/api/invoice/**",
+                                "/api/expense/**",
+                                "/api/returnproduct/**",
+                                "/api/resellproduct/**",
+                                "/api/replaceUnit/**",
+                                "/api/cogs/**",
+                                "/api/duelist/**",
+                                "/api/manager/**",
+                                "/api/manager/profile/**",
+                                "/api/manager/reg/**",
+                                "/api/cashier/reg/**",
+                                "/api/cashier/profile/**",
+                                "/api/product/**",
+                                "/api/supplier/**",
+                                "/images/**"
+                        ).permitAll()
+
+
                 )
                 .userDetailsService(userService)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
+
 
     @Bean
     public JwtAuthFilter jwtAuthFilter(JwtService jwtService, UserService userService) {
@@ -67,21 +87,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public PasswordEncoder encoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:50100"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:4200",
+                "http://localhost:50100",
+                "http://127.0.0.1:4200"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "DELETE", "PUT", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Cache_Control", "Content-type"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 }
