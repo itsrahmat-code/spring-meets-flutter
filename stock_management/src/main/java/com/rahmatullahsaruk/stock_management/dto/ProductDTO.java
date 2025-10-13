@@ -1,34 +1,31 @@
-package com.rahmatullahsaruk.stock_management.entity;
+package com.rahmatullahsaruk.stock_management.dto;
 
-import jakarta.persistence.*;
+public class ProductDTO {
 
-@Entity
-@Table(name = "products")
-public class Product {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-
+    private Long id;
     private String productName;
     private String description;
     private double price;
-    private int quantity;  // ✅ Added field required for invoice subtotal calculation
+    private int quantity;
+    private Long invoiceId; // Optional: link to invoice without embedding the full entity
 
-    // Many products can belong to one invoice
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id")
-    private Invoice invoice;
+    public ProductDTO() {}
 
-    public Product() {}
+    public ProductDTO(Long id, String productName, String description, double price, int quantity, Long invoiceId) {
+        this.id = id;
+        this.productName = productName;
+        this.description = description;
+        this.price = price;
+        this.quantity = quantity;
+        this.invoiceId = invoiceId;
+    }
 
     // --- Getters and Setters ---
-
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -64,17 +61,16 @@ public class Product {
         this.quantity = quantity;
     }
 
-    public Invoice getInvoice() {
-        return invoice;
+    public Long getInvoiceId() {
+        return invoiceId;
     }
 
-    public void setInvoice(Invoice invoice) {
-        this.invoice = invoice;
+    public void setInvoiceId(Long invoiceId) {
+        this.invoiceId = invoiceId;
     }
 
-    // --- Utility Methods ---
-
+    // --- Utility ---
     public double getTotalPrice() {
-        return this.price * this.quantity;
+        return price * quantity;
     }
 }

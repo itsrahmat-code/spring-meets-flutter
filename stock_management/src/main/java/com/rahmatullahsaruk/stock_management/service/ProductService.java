@@ -4,11 +4,13 @@ import com.rahmatullahsaruk.stock_management.entity.Product;
 import com.rahmatullahsaruk.stock_management.repository.ProductRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class ProductService {
 
     private final ProductRepo productRepo;
@@ -43,9 +45,10 @@ public class ProductService {
         return productRepo.findAll().stream().map(product -> {
             Product dto = new Product();
             dto.setId(product.getId());
-            dto.setProductname(product.getProductname());
+            dto.setProductName(product.getProductName()); // ✅ fixed
             dto.setDescription(product.getDescription());
             dto.setPrice(product.getPrice());
+            dto.setQuantity(product.getQuantity());
             return dto;
         }).toList();
     }

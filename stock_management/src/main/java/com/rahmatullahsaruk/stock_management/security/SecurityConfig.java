@@ -1,4 +1,5 @@
 package com.rahmatullahsaruk.stock_management.security;
+
 import com.rahmatullahsaruk.stock_management.jwt.JwtAuthFilter;
 import com.rahmatullahsaruk.stock_management.jwt.JwtService;
 import com.rahmatullahsaruk.stock_management.service.UserService;
@@ -20,93 +21,67 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
-    @Configuration
-    @EnableWebSecurity
-    public class SecurityConfig {
 
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
 
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/auth/**",
+            "/api/admin/**",
+            "/api/cashier/**",
+            "/api/manager/**",
+            "/api/invoice/**",
+            "/api/product/**",
+            "/images/**",
+            "/api/employee"
+    };
 
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http,
-                                               JwtAuthFilter jwtAuthFilter,
-                                               UserService userService) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           JwtAuthFilter jwtAuthFilter,
+                                           UserService userService) throws Exception {
 
-            return http
-                    .csrf(AbstractHttpConfigurer::disable)
-                    .cors(Customizer.withDefaults())
-                    .authorizeHttpRequests(req -> req
-                            .requestMatchers(
-                                    "/api/auth/login",
-                                    "/api/auth/login/**",
-                                    "/api/auth/logout",
-                                    "/api/auth/logout/**",
-                                    "/api/auth/active",
-                                    "/api/auth/active/**",
-                                    "/api/admin",
-                                    "/api/admin/**",
-                                    "/api/auth/all",
-                                    "/api/auth/all/**",
-                                    "/api/admin",
-                                    "/api/admin/**",
-                                    "/api/admin/reg",
-                                    "/api/admin/reg/**",
-                                    "/api/cashier",
-                                    "/api/cashier/**",
-                                    "/api/cashier/profile",
-                                    "/api/cashier/profile/**",
-                                    "/api/manager/reg",
-                                    "/api/manager/reg/**",
-                                    "/api/manager/profile",
-                                    "/api/manager/profile/**",
-                                    "/images",
-                                    "/images/**",
-                                    "/api/employee",
-                                    "/api/manager",
-                                    "/api/manager/**",
-                                    "/api/invoice",
-                                    "/api/invoice/**",
-                                    "/api/product",
-                                    "/api/product/**"
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .userDetailsService(userService)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-                            ).permitAll()
-
-
-                    )
-                    .userDetailsService(userService)
-                    .sessionManagement(session ->
-                            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    )
-                    .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                    .build();
-        }
-
-
-        @Bean
-        public JwtAuthFilter jwtAuthFilter(JwtService jwtService, UserService userService) {
-            return new JwtAuthFilter(jwtService, userService);
-        }
-
-        @Bean
-        public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-            return configuration.getAuthenticationManager();
-        }
-
-        @Bean
-        public PasswordEncoder encoder() {
-            return new BCryptPasswordEncoder();
-        }
-
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-            CorsConfiguration configuration = new CorsConfiguration();
-            configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:50100"));
-            configuration.setAllowedMethods(List.of("GET", "POST", "DELETE", "PUT", "OPTIONS"));
-            configuration.setAllowedHeaders(List.of("Authorization", "Cache_Control", "Content-type"));
-            configuration.setAllowCredentials(true);
-
-            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-            source.registerCorsConfiguration("/**", configuration);
-            return source;
-        }
+        return http.build();
     }
 
+    @Bean
+    public JwtAuthFilter jwtAuthFilter(JwtService jwtService, UserService userService) {
+        return new JwtAuthFilter(jwtService, userService);
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:50100"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "DELETE", "PUT", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
+}

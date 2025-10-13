@@ -1,18 +1,12 @@
-package com.rahmatullahsaruk.stock_management.entity;
+package com.rahmatullahsaruk.stock_management.dto;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "invoices")
-public class Invoice {
+public class InvoiceDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private String invoiceNumber;
     private LocalDateTime date;
 
     private String customerName;
@@ -20,28 +14,53 @@ public class Invoice {
     private String customerPhone;
     private String customerAddress;
 
-    private double subtotal;   // Sum of (product price * quantity)
-    private double discount;   // Applied discount (if any)
-    private double taxRate = 5.0;  // Sales tax in percentage
-    private double taxAmount;  // (subtotal - discount) * (taxRate / 100)
-    private double total;      // Final total (subtotal - discount + tax)
+    private double subtotal;
+    private double discount;
+    private double taxRate;
+    private double taxAmount;
+    private double total;
     private double paid;
 
-    private String invoiceNumber;
+    // Include a list of products associated with this invoice
+    private List<ProductDTO> products;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Product> products = new ArrayList<>();
+    public InvoiceDTO() {}
 
-    public Invoice() {}
+    public InvoiceDTO(Long id, String invoiceNumber, LocalDateTime date, String customerName,
+                      String customerEmail, String customerPhone, String customerAddress,
+                      double subtotal, double discount, double taxRate, double taxAmount,
+                      double total, double paid, List<ProductDTO> products) {
+        this.id = id;
+        this.invoiceNumber = invoiceNumber;
+        this.date = date;
+        this.customerName = customerName;
+        this.customerEmail = customerEmail;
+        this.customerPhone = customerPhone;
+        this.customerAddress = customerAddress;
+        this.subtotal = subtotal;
+        this.discount = discount;
+        this.taxRate = taxRate;
+        this.taxAmount = taxAmount;
+        this.total = total;
+        this.paid = paid;
+        this.products = products;
+    }
 
     // --- Getters and Setters ---
-
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getInvoiceNumber() {
+        return invoiceNumber;
+    }
+
+    public void setInvoiceNumber(String invoiceNumber) {
+        this.invoiceNumber = invoiceNumber;
     }
 
     public LocalDateTime getDate() {
@@ -132,48 +151,11 @@ public class Invoice {
         this.paid = paid;
     }
 
-    public String getInvoiceNumber() {
-        return invoiceNumber;
-    }
-
-    public void setInvoiceNumber(String invoiceNumber) {
-        this.invoiceNumber = invoiceNumber;
-    }
-
-    public List<Product> getProducts() {
+    public List<ProductDTO> getProducts() {
         return products;
     }
 
-    public void setProducts(List<Product> products) {
+    public void setProducts(List<ProductDTO> products) {
         this.products = products;
-    }
-
-    // --- Utility methods ---
-
-    public void calculateTotals() {
-        if (products == null || products.isEmpty()) {
-            this.subtotal = 0.0;
-            this.taxAmount = 0.0;
-            this.total = 0.0;
-            return;
-        }
-
-        this.subtotal = products.stream()
-                .mapToDouble(p -> p.getPrice() * p.getQuantity())
-                .sum();
-
-        this.taxAmount = (subtotal - discount) * (taxRate / 100.0);
-        this.total = subtotal - discount + taxAmount;
-    }
-
-    @PrePersist
-    public void onCreate() {
-        if (this.date == null) {
-            this.date = LocalDateTime.now();
-        }
-
-        if (this.invoiceNumber == null) {
-            this.invoiceNumber = "INV-" + System.currentTimeMillis();
-        }
     }
 }
