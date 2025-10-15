@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
-import 'package:merchandise_management_system/product/add_product_page.dart';
+
 import 'package:merchandise_management_system/service/authservice.dart';
 
-import '../product/product_list_screen.dart';
+
 // TODO: Import your product pages here
 // import 'add_product_page.dart';
 // import 'product_list_page.dart';
@@ -179,7 +179,7 @@ class ManagerPage extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () {
                     // TODO: Navigate to Product List Page
-                     Navigator.push(context, MaterialPageRoute(builder: (_) => ProductListScreen()));
+                     Navigator.push(context, MaterialPageRoute(builder: (_) =>product_page));
                   },
                   icon: Icon(Icons.list),
                   label: Text("Product List"),
