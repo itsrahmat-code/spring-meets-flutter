@@ -1,234 +1,43 @@
+// File: lib/pages/manager_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
-
 import 'package:merchandise_management_system/service/authservice.dart';
+import '../entity/dashboard.dart';
+import '../pos/product_list_page.dart';
+import 'package:merchandise_management_system/pos/add_product.dart';
+import 'manager_profile_page.dart'; // Import the new profile page
 
+import '../service/dashboardservice.dart';
 
-// TODO: Import your product pages here
-// import 'add_product_page.dart';
-// import 'product_list_page.dart';
-
-class ManagerPage extends StatelessWidget {
+// ManagerPage is now a StatefulWidget to handle dashboard data fetching
+class ManagerPage extends StatefulWidget {
   final Map<String, dynamic> profile;
-  final AuthService _authService = AuthService();
 
-  ManagerPage({Key? key, required this.profile}) : super(key: key);
+  const ManagerPage({Key? key, required this.profile}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final String baseUrl = "http://localhost:8085/images/roleManager/";
-    final String? photoName = profile['photo'];
-    final String? photoUrl =
-    (photoName != null && photoName.isNotEmpty) ? "$baseUrl$photoName" : null;
+  State<ManagerPage> createState() => _ManagerPageState();
+}
 
-    final int id = profile['id'] ?? 0;
-    final String name = profile['name'] ?? 'N/A';
-    final String email = profile['email'] ?? 'N/A';
-    final String phone = profile['phone'] ?? 'N/A';
-    final String gender = profile['gender'] ?? 'N/A';
-    final String address = profile['address'] ?? 'N/A';
-    final String dateOfBirth = profile['dateOfBirth'] != null
-        ? _formatDate(profile['dateOfBirth'])
-        : 'N/A';
+class _ManagerPageState extends State<ManagerPage> {
+  final AuthService _authService = AuthService();
+  final DashboardService _dashboardService = DashboardService();
+  late Future<DashboardModel> _dashboardFuture;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Manager Profile',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.deepPurpleAccent,
-        centerTitle: true,
-        elevation: 4,
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Colors.deepPurpleAccent),
-              accountName: Text(
-                name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              accountEmail: Text(email),
-              currentAccountPicture: CircleAvatar(
-                backgroundImage: (photoUrl != null)
-                    ? NetworkImage(photoUrl)
-                    : const AssetImage('assets/default_avatar.jpg')
-                as ImageProvider,
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('My Profile'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.deepOrange),
-              title: const Text(
-                'Logout',
-                style: TextStyle(color: Colors.deepOrange),
-              ),
-              onTap: () async {
-                await _authService.logout();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => LoginPage()),
-                      (route) => false,
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Avatar with border and shadow
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-                border: Border.all(
-                  color: Colors.deepPurple,
-                  width: 3,
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: (photoUrl != null)
-                    ? NetworkImage(photoUrl)
-                    : const AssetImage('assets/default_avatar.png')
-                as ImageProvider,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Name and Email
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              email,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const SizedBox(height: 24),
-
-            // Info card
-            Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              elevation: 3,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20.0, vertical: 16.0),
-                child: Column(
-                  children: [
-                    _buildInfoRow(Icons.badge, "ID", id.toString()),
-                    _buildInfoRow(Icons.phone, "Phone", phone),
-                    _buildInfoRow(Icons.person, "Gender", gender),
-                    _buildInfoRow(Icons.home, "Address", address),
-                    _buildInfoRow(Icons.cake, "Date of Birth", dateOfBirth),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Product Action Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Navigate to Add Product Page
-                    // Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductPage()));
-                  },
-                  icon: Icon(Icons.add),
-                  label: Text("Add Product"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Navigate to Product List Page
-                    //  Navigator.push(context, MaterialPageRoute(builder: (_) =>product_page));
-                  },
-                  icon: Icon(Icons.list),
-                  label: Text("Product List"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _dashboardFuture = _dashboardService.getDashboardData();
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.deepPurple),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 3,
-            child: Text(
-              "$label:",
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-        ],
-      ),
-    );
+  void _navigateToPage(Widget page) {
+    Navigator.pop(context); // Close the drawer
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
+  // Helper method to format date (moved from ManagerProfilePage for the drawer header)
   String _formatDate(dynamic date) {
     try {
       DateTime parsedDate;
@@ -237,11 +46,298 @@ class ManagerPage extends StatelessWidget {
       } else if (date is DateTime) {
         parsedDate = date;
       } else {
-        return 'Invalid date';
+        return 'N/A';
       }
       return DateFormat('yyyy-MM-dd').format(parsedDate);
     } catch (e) {
-      return 'Invalid date';
+      return 'N/A';
     }
+  }
+
+  // New helper for building Dashboard Cards (for brevity in the main build method)
+  Widget _buildDashboardCard(String title, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 4,
+        margin: const EdgeInsets.all(8.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 30),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // New helper for building Category Section (for brevity in the main build method)
+  Widget _buildCategorySection(Map<String, int> categories) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Total Products by Category',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
+            ),
+            const Divider(),
+            ...categories.entries.map((entry) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    entry.key,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  Text(
+                    '${entry.value} units',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            )).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // New helper for building Action Buttons (for brevity in the main build method)
+  Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onPressed) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5.0),
+        child: ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(label),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String baseUrl = "http://localhost:8085/images/roleManager/";
+    final String? photoName = widget.profile['photo'];
+    final String? photoUrl =
+    (photoName != null && photoName.isNotEmpty) ? "$baseUrl$photoName" : null;
+
+    final String name = widget.profile['name'] ?? 'N/A';
+    final String email = widget.profile['email'] ?? 'N/A';
+
+    return WillPopScope(
+      onWillPop: () async {
+        // Prevent back button from leaving the page unless it's the Logout button
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please use the Logout button to exit.')),
+        );
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Manager Dashboard',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.deepPurple,
+          centerTitle: true,
+          elevation: 4,
+        ),
+        // --- UPDATED DRAWER ---
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              UserAccountsDrawerHeader(
+                decoration: const BoxDecoration(color: Colors.deepPurple),
+                accountName: Text(
+                  name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                accountEmail: Text(email),
+                currentAccountPicture: CircleAvatar(
+                  backgroundImage: (photoUrl != null)
+                      ? NetworkImage(photoUrl)
+                      : const AssetImage('assets/default_avatar.png')
+                  as ImageProvider,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.dashboard),
+                title: const Text('Dashboard'),
+                onTap: () => Navigator.pop(context), // Close drawer and stay here
+              ),
+              ListTile(
+                leading: const Icon(Icons.person),
+                title: const Text('My Profile'),
+                onTap: () => _navigateToPage(ManagerProfilePage(profile: widget.profile)),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.add_shopping_cart),
+                title: const Text('Add Product'),
+                onTap: () => _navigateToPage(const ProductAdd()),
+              ),
+              ListTile(
+                leading: const Icon(Icons.list_alt),
+                title: const Text('Product List'),
+                onTap: () => _navigateToPage(const ProductListPage()),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.deepOrange),
+                title: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.deepOrange),
+                ),
+                onTap: () async {
+                  await _authService.logout();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => LoginPage()),
+                        (route) => false,
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        // --- DASHBOARD BODY ---
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Business Overview',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
+              ),
+              const Divider(),
+
+              FutureBuilder<DashboardModel>(
+                future: _dashboardFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: Padding(
+                      padding: EdgeInsets.all(30.0),
+                      child: CircularProgressIndicator(color: Colors.deepPurple),
+                    ));
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error loading dashboard: ${snapshot.error}'));
+                  } else if (snapshot.hasData) {
+                    final data = snapshot.data!;
+                    return Column(
+                      children: [
+                        // Total Sales, Profit, Expense
+                        Row(
+                          children: [
+                            _buildDashboardCard(
+                              'Total Sales',
+                              '\$${data.totalSales.toStringAsFixed(2)}',
+                              Icons.trending_up,
+                              Colors.green,
+                            ),
+                            _buildDashboardCard(
+                              'Total Profit',
+                              '\$${data.totalProfit.toStringAsFixed(2)}',
+                              Icons.monetization_on,
+                              Colors.blue,
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            _buildDashboardCard(
+                              'Total Expense',
+                              '\$${data.totalExpense.toStringAsFixed(2)}',
+                              Icons.money_off,
+                              Colors.red,
+                            ),
+                            _buildDashboardCard(
+                              'Product Types',
+                              data.productsByCategory.length.toString(),
+                              Icons.category,
+                              Colors.orange,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // Products by Category
+                        _buildCategorySection(data.productsByCategory),
+
+                        const SizedBox(height: 30),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+
+              // Product Action Buttons (quick access)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    "Add Product",
+                    Icons.add,
+                    Colors.deepPurple,
+                        () => _navigateToPage(const ProductAdd()),
+                  ),
+                  _buildActionButton(
+                    "Product List",
+                    Icons.list,
+                    Colors.deepPurple,
+                        () => _navigateToPage(const ProductListPage()),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

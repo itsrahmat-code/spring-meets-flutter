@@ -27,40 +27,42 @@ public class InvoiceService {
         List<Product> soldProducts = new ArrayList<>();
 
         for (Product invoiceProduct : invoice.getProducts()) {
-            // Fetch stock product from DB
+            // Fetch the actual product from the database
             Product stockProduct = productRepo.findById(invoiceProduct.getId())
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + invoiceProduct.getId()));
 
-            // Deduct stock
+            // Deduct stock quantity
             int newQuantity = stockProduct.getQuantity() - invoiceProduct.getQuantity();
             if (newQuantity < 0) {
-                throw new RuntimeException("Not enough stock for product: " + stockProduct.getProductName());
+                throw new RuntimeException("Not enough stock for product: " + stockProduct.getName());
             }
             stockProduct.setQuantity(newQuantity);
-            productRepo.save(stockProduct); // ✅ save updated stock
+            productRepo.save(stockProduct);
 
-            // Create snapshot product for the invoice
+            // Create a snapshot product for the invoice
             Product sold = new Product();
-            sold.setProductName(stockProduct.getProductName());
-            sold.setDescription(stockProduct.getDescription());
+            sold.setName(stockProduct.getName());
+            sold.setDetails(stockProduct.getDetails());
             sold.setPrice(stockProduct.getPrice());
-            sold.setQuantity(invoiceProduct.getQuantity()); // sold quantity
-            sold.setInvoice(invoice); // ✅ link to invoice
+            sold.setQuantity(invoiceProduct.getQuantity()); // Sold quantity
+            sold.setInvoice(invoice);
 
             soldProducts.add(sold);
         }
 
+        // Set products to invoice
         invoice.setProducts(soldProducts);
 
-        // Set defaults
+        // Set defaults if needed
         if (invoice.getDate() == null) {
             invoice.setDate(LocalDateTime.now());
         }
-        if (invoice.getInvoiceNumber() == null) {
+
+        if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isBlank()) {
             invoice.setInvoiceNumber("INV-" + System.currentTimeMillis());
         }
 
-        // Auto-calculate totals
+        // Auto-calculate subtotal, tax, total
         invoice.calculateTotals();
 
         return invoiceRepo.save(invoice);

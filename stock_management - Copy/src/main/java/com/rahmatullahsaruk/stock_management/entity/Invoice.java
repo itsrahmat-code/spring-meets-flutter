@@ -1,6 +1,5 @@
 package com.rahmatullahsaruk.stock_management.entity;
 
-
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,10 +14,10 @@ public class Invoice {
 
     private LocalDateTime date;
 
-    private String name;
-    private String email;
-    private String phone;
-    private String address;
+    private String customerName;
+    private String customerEmail;
+    private String customerPhone;
+    private String customerAddress;
 
     private double subtotal;   // Sum of (product price * quantity)
     private double discount;   // Applied discount (if any)
@@ -27,7 +26,7 @@ public class Invoice {
     private double total;      // Final total (subtotal - discount + tax)
 
     private double paid;
-    private double due;
+
 
     private String invoiceNumber;
 
@@ -37,85 +36,120 @@ public class Invoice {
     public Invoice() {
     }
 
-    public Invoice(Long id, LocalDateTime date, String name, String email, String phone, String address, double subtotal, double discount, double taxRate, double taxAmount, double total, double paid, double due, String invoiceNumber, List<Product> products) {
-        this.id = id;
-        this.date = date;
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
-        this.address = address;
-        this.subtotal = subtotal;
-        this.discount = discount;
-        this.taxRate = taxRate;
-        this.taxAmount = taxAmount;
-        this.total = total;
-        this.paid = paid;
-        this.due = due;
-        this.invoiceNumber = invoiceNumber;
-        this.products = products;
+    public Long getId() {
+        return id;
     }
 
-    // --- Getters and Setters ---
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Long getId() { return id; }
+    public LocalDateTime getDate() {
+        return date;
+    }
 
-    public void setId(Long id) { this.id = id; }
+    public void setDate(LocalDateTime date) {
+        this.date = date;
+    }
 
-    public LocalDateTime getDate() { return date; }
+    public String getCustomerName() {
+        return customerName;
+    }
 
-    public void setDate(LocalDateTime date) { this.date = date; }
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
 
-    public String getName() { return name; }
+    public String getCustomerEmail() {
+        return customerEmail;
+    }
 
-    public void setName(String name) { this.name = name; }
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
+    }
 
-    public String getEmail() { return email; }
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
 
-    public void setEmail(String email) { this.email = email; }
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
+    }
 
-    public String getPhone() { return phone; }
+    public String getCustomerAddress() {
+        return customerAddress;
+    }
 
-    public void setPhone(String phone) { this.phone = phone; }
+    public void setCustomerAddress(String customerAddress) {
+        this.customerAddress = customerAddress;
+    }
 
-    public String getAddress() { return address; }
+    public double getSubtotal() {
+        return subtotal;
+    }
 
-    public void setAddress(String address) { this.address = address; }
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
+    }
 
-    public double getSubtotal() { return subtotal; }
+    public double getDiscount() {
+        return discount;
+    }
 
-    public void setSubtotal(double subtotal) { this.subtotal = subtotal; }
+    public void setDiscount(double discount) {
+        this.discount = discount;
+    }
 
-    public double getDiscount() { return discount; }
+    public double getTaxRate() {
+        return taxRate;
+    }
 
-    public void setDiscount(double discount) { this.discount = discount; }
+    public void setTaxRate(double taxRate) {
+        this.taxRate = taxRate;
+    }
 
-    public double getTaxRate() { return taxRate; }
+    public double getTaxAmount() {
+        return taxAmount;
+    }
 
-    public void setTaxRate(double taxRate) { this.taxRate = taxRate; }
+    public void setTaxAmount(double taxAmount) {
+        this.taxAmount = taxAmount;
+    }
 
-    public double getTaxAmount() { return taxAmount; }
+    public double getTotal() {
+        return total;
+    }
 
-    public void setTaxAmount(double taxAmount) { this.taxAmount = taxAmount; }
+    public void setTotal(double total) {
+        this.total = total;
+    }
 
-    public double getTotal() { return total; }
+    public double getPaid() {
+        return paid;
+    }
 
-    public void setTotal(double total) { this.total = total; }
+    public void setPaid(double paid) {
+        this.paid = paid;
+    }
 
-    public double getPaid() { return paid; }
 
-    public void setPaid(double paid) { this.paid = paid; }
 
-    public double getDue() { return due; }
 
-    public void setDue(double due) { this.due = due; }
+    public String getInvoiceNumber() {
+        return invoiceNumber;
+    }
 
-    public String getInvoiceNumber() { return invoiceNumber; }
+    public void setInvoiceNumber(String invoiceNumber) {
+        this.invoiceNumber = invoiceNumber;
+    }
 
-    public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
+    public List<Product> getProducts() {
+        return products;
+    }
 
-    public List<Product> getProducts() { return products; }
-
-    public void setProducts(List<Product> products) { this.products = products; }
+    public void setProducts(List<Product> products) {
+        this.products = products;
+    }
 
     // Automatically calculate subtotal, tax, total and due
     public void calculateTotals() {
@@ -125,6 +159,6 @@ public class Invoice {
 
         this.taxAmount = (subtotal - discount) * (taxRate / 100.0);
         this.total = subtotal - discount + taxAmount;
-        this.due = total - paid;
+
     }
 }

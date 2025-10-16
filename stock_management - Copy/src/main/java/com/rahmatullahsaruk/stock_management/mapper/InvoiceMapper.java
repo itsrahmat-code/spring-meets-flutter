@@ -11,9 +11,7 @@ import java.util.stream.Collectors;
 public class InvoiceMapper {
 
     public static InvoiceDTO toDTO(Invoice invoice) {
-        if (invoice == null) {
-            return null;
-        }
+        if (invoice == null) return null;
 
         InvoiceDTO dto = new InvoiceDTO();
         dto.setId(invoice.getId());
@@ -30,7 +28,7 @@ public class InvoiceMapper {
         dto.setTotal(invoice.getTotal());
         dto.setPaid(invoice.getPaid());
 
-        // Convert product list to DTOs
+
         if (invoice.getProducts() != null) {
             List<ProductDTO> productDTOs = invoice.getProducts().stream()
                     .map(ProductMapper::toDTO)
@@ -42,9 +40,7 @@ public class InvoiceMapper {
     }
 
     public static Invoice toEntity(InvoiceDTO dto) {
-        if (dto == null) {
-            return null;
-        }
+        if (dto == null) return null;
 
         Invoice invoice = new Invoice();
         invoice.setId(dto.getId());
@@ -61,11 +57,11 @@ public class InvoiceMapper {
         invoice.setTotal(dto.getTotal());
         invoice.setPaid(dto.getPaid());
 
-        // Convert ProductDTOs to Product entities and link them to the invoice
+
         if (dto.getProducts() != null) {
             List<Product> products = dto.getProducts().stream()
                     .map(ProductMapper::toEntity)
-                    .peek(product -> product.setInvoice(invoice))
+                    .peek(p -> p.setInvoice(invoice))
                     .collect(Collectors.toList());
             invoice.setProducts(products);
         }

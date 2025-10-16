@@ -1,69 +1,97 @@
 package com.rahmatullahsaruk.stock_management.restcontroller;
 
+import com.rahmatullahsaruk.stock_management.dto.ProductDTO;
+import com.rahmatullahsaruk.stock_management.entity.Invoice;
 import com.rahmatullahsaruk.stock_management.entity.Product;
-import com.rahmatullahsaruk.stock_management.repository.ProductRepo;
+import com.rahmatullahsaruk.stock_management.mapper.ProductMapper;
+import com.rahmatullahsaruk.stock_management.repository.InvoiceRepo;
 import com.rahmatullahsaruk.stock_management.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/product")
 @CrossOrigin("*")
 public class ProductController {
 
-    private final ProductRepo productRepo;
     private final ProductService productService;
+    private final InvoiceRepo invoiceRepo;
 
-    public ProductController(ProductRepo productRepo, ProductService productService) {
-        this.productRepo = productRepo;
+    public ProductController(ProductService productService, InvoiceRepo invoiceRepo) {
         this.productService = productService;
+        this.invoiceRepo = invoiceRepo;
     }
 
-    // Create
+    // ✅ Create
     @PostMapping("/add")
-    public Product addProduct(@RequestBody Product product) {
-        return productService.saveProduct(product);
+    public ResponseEntity<ProductDTO> addProduct(@RequestBody ProductDTO dto) {
+        Product product = ProductMapper.toEntity(dto);
+
+        // If invoiceId is present, fetch and set the Invoice
+        if (dto.getInvoiceId() != null) {
+            Optional<Invoice> invoiceOpt = invoiceRepo.findById(dto.getInvoiceId());
+            invoiceOpt.ifPresent(product::setInvoice);
+        }
+
+        Product savedProduct = productService.saveProduct(product);
+        return ResponseEntity.ok(ProductMapper.toDTO(savedProduct));
     }
 
-    // Read all
+    // ✅ Read all
     @GetMapping("/all")
-    public List<Product> getAllProducts() {
-        return productRepo.findAll();
+    public List<ProductDTO> getAllProducts() {
+        return productService.getAllProducts().stream()
+                .map(ProductMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
-    // Read one by ID
+    // ✅ Read one by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        Optional<Product> product = productRepo.findById(id);
-        return product.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // Update
-    @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
-        return productRepo.findById(id)
-                .map(product -> {
-                    product.setProductName(productDetails.getProductName());
-                    product.setDescription(productDetails.getDescription());
-                    product.setPrice(productDetails.getPrice());
-                    product.setQuantity(productDetails.getQuantity());
-                    Product updatedProduct = productRepo.save(product);
-                    return ResponseEntity.ok(updatedProduct);
-                })
+    public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id) {
+        Optional<Product> productOpt = productService.getProductById(id);
+        return productOpt.map(product -> ResponseEntity.ok(ProductMapper.toDTO(product)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Delete
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
-        if (!productRepo.existsById(id)) {
+    // ✅ Update
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id, @RequestBody ProductDTO dto) {
+        Optional<Product> existingOpt = productService.getProductById(id);
+
+        if (existingOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        productRepo.deleteById(id);
+
+        Product existing = existingOpt.get();
+        existing.setName(dto.getName());
+        existing.setCategory(dto.getCategory());
+        existing.setBrand(dto.getBrand());
+        existing.setModel(dto.getModel());
+        existing.setDetails(dto.getDetails());
+        existing.setQuantity(dto.getQuantity());
+        existing.setPrice(dto.getPrice());
+
+        if (dto.getInvoiceId() != null) {
+            invoiceRepo.findById(dto.getInvoiceId()).ifPresent(existing::setInvoice);
+        } else {
+            existing.setInvoice(null); // Optional: handle removing invoice
+        }
+
+        Product updated = productService.saveProduct(existing);
+        return ResponseEntity.ok(ProductMapper.toDTO(updated));
+    }
+
+    // ✅ Delete
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        if (productService.getProductById(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        productService.deleteProduct(id);
         return ResponseEntity.ok().build();
     }
 }
