@@ -12,13 +12,15 @@ public class ProductMapper {
 
         ProductDTO dto = new ProductDTO();
         dto.setId(product.getId());
-        dto.setProductName(product.getProductName());
-        dto.setDescription(product.getDescription());
-        dto.setPrice(product.getPrice());
+        dto.setName(product.getName());
+        dto.setCategory(product.getCategory());
+        dto.setBrand(product.getBrand());
+        dto.setModel(product.getModel());
+        dto.setDetails(product.getDetails());
         dto.setQuantity(product.getQuantity());
-        dto.setInvoiceId(
-                product.getInvoice() != null ? product.getInvoice().getId() : null
-        );
+        dto.setPrice(product.getPrice());
+        dto.setInvoiceId(product.getInvoice() != null ? product.getInvoice().getId() : null);
+
         return dto;
     }
 
@@ -29,11 +31,15 @@ public class ProductMapper {
 
         Product product = new Product();
         product.setId(dto.getId());
-        product.setProductName(dto.getProductName());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
+        product.setName(dto.getName());
+        product.setCategory(dto.getCategory());
+        product.setBrand(dto.getBrand());
+        product.setModel(dto.getModel());
+        product.setDetails(dto.getDetails());
         product.setQuantity(dto.getQuantity());
-        // Invoice is set manually in InvoiceMapper to avoid circular reference
+        product.setPrice(dto.getPrice());
+        // Note: invoice should be set in service or another mapper to avoid circular reference
+
         return product;
     }
 }

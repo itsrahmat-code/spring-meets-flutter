@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
-
 import 'package:merchandise_management_system/service/authservice.dart';
 
 
@@ -163,7 +162,7 @@ class ManagerPage extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () {
                     // TODO: Navigate to Add Product Page
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductPage()));
+                    // Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductPage()));
                   },
                   icon: Icon(Icons.add),
                   label: Text("Add Product"),
@@ -179,7 +178,7 @@ class ManagerPage extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () {
                     // TODO: Navigate to Product List Page
-                     Navigator.push(context, MaterialPageRoute(builder: (_) =>product_page));
+                    //  Navigator.push(context, MaterialPageRoute(builder: (_) =>product_page));
                   },
                   icon: Icon(Icons.list),
                   label: Text("Product List"),

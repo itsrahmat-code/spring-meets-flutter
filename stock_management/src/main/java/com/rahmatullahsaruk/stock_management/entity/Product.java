@@ -1,67 +1,47 @@
 package com.rahmatullahsaruk.stock_management.entity;
 
+
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "products")
+@Table(name = "product")
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    private String productName;
-    private String description;
-    private double price;
-    private int quantity;  // ✅ Added field required for invoice subtotal calculation
-
-    // Many products can belong to one invoice
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id")
+    // Relationship with Invoice
+    @ManyToOne
     private Invoice invoice;
 
-    public Product() {}
+    @Column(nullable = false)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Category category;
+
+    @Column(nullable = false)
+    private String brand;
+
+    private String model;
+    private String details;
+
+    @Column(nullable = false)
+    private int quantity; // ✅ Changed from double to int (for item count)
+
+    @Column(nullable = false)
+    private double price;
 
     // --- Getters and Setters ---
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
     }
 
     public Invoice getInvoice() {
@@ -72,9 +52,66 @@ public class Product {
         this.invoice = invoice;
     }
 
-    // --- Utility Methods ---
+    public String getName() {
+        return name;
+    }
 
-    public double getTotalPrice() {
-        return this.price * this.quantity;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
+
+    public int getQuantity() { // ✅ Fixed
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public double getPrice() { // ✅ Only one version
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    // --- Enum ---
+
+    public enum Category {
+        Laptop,
+        Accessory
     }
 }

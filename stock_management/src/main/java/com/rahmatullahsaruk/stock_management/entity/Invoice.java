@@ -2,7 +2,6 @@ package com.rahmatullahsaruk.stock_management.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,16 +24,17 @@ public class Invoice {
     private double taxRate = 5.0;  // Sales tax in percentage
     private double taxAmount;  // (subtotal - discount) * (taxRate / 100)
     private double total;      // Final total (subtotal - discount + tax)
+
     private double paid;
+
 
     private String invoiceNumber;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Product> products = new ArrayList<>();
+    @OneToMany(mappedBy = "invoice", orphanRemoval = true)
+    private List<Product> products ;
 
-    public Invoice() {}
-
-    // --- Getters and Setters ---
+    public Invoice() {
+    }
 
     public Long getId() {
         return id;
@@ -132,6 +132,9 @@ public class Invoice {
         this.paid = paid;
     }
 
+
+
+
     public String getInvoiceNumber() {
         return invoiceNumber;
     }
@@ -148,32 +151,14 @@ public class Invoice {
         this.products = products;
     }
 
-    // --- Utility methods ---
-
+    // Automatically calculate subtotal, tax, total and due
     public void calculateTotals() {
-        if (products == null || products.isEmpty()) {
-            this.subtotal = 0.0;
-            this.taxAmount = 0.0;
-            this.total = 0.0;
-            return;
-        }
-
         this.subtotal = products.stream()
                 .mapToDouble(p -> p.getPrice() * p.getQuantity())
                 .sum();
 
         this.taxAmount = (subtotal - discount) * (taxRate / 100.0);
         this.total = subtotal - discount + taxAmount;
-    }
 
-    @PrePersist
-    public void onCreate() {
-        if (this.date == null) {
-            this.date = LocalDateTime.now();
-        }
-
-        if (this.invoiceNumber == null) {
-            this.invoiceNumber = "INV-" + System.currentTimeMillis();
-        }
     }
 }

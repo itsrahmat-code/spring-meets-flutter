@@ -66,7 +66,6 @@ public class InvoiceController {
     @PutMapping("/{id}")
     public ResponseEntity<InvoiceDTO> updateInvoice(@PathVariable Long id, @RequestBody InvoiceDTO invoiceDTO) {
         Optional<Invoice> optionalInvoice = invoiceService.getById(id);
-
         if (optionalInvoice.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -74,7 +73,7 @@ public class InvoiceController {
         Invoice existing = optionalInvoice.get();
         Invoice updatedData = InvoiceMapper.toEntity(invoiceDTO);
 
-        // Update basic fields
+        // ✅ Update fields to match new entity
         existing.setCustomerName(updatedData.getCustomerName());
         existing.setCustomerEmail(updatedData.getCustomerEmail());
         existing.setCustomerPhone(updatedData.getCustomerPhone());
