@@ -40,7 +40,8 @@ class _LoginPageState extends State<LoginPage> {
         if (profile != null) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => AdminPage(profile: profile)),
+            MaterialPageRoute(
+                builder: (context) => AdminPage(profile: profile)),
           );
         }
       } else if (role == 'MANAGER') {
@@ -48,7 +49,8 @@ class _LoginPageState extends State<LoginPage> {
         if (profile != null) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => ManagerPage(profile: profile)),
+            MaterialPageRoute(
+                builder: (context) => ManagerPage(profile: profile)),
           );
         }
       } else {
@@ -68,73 +70,94 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Stack(
         children: [
+
           /// Background Image
           Positioned.fill(
             child: Image.asset(
-              'assets/img/11.png', // 👈 Your background image path
+              'assets/img/i1.jpg', // 👈 Your background image path
               fit: BoxFit.cover,
             ),
           ),
 
           /// Foreground content
           Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Card(
-                color: Colors.white.withOpacity(0.85),
-                elevation: 8,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        "Login",
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 24),
-                      TextField(
-                        controller: email,
-                        decoration: const InputDecoration(
-                          labelText: "example@gmail.com",
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.email_rounded),
+            child: Align( // Use Align to control where the child sits within the Center's boundaries
+              alignment: Alignment.topCenter, // Align the content to the top
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Add a SizedBox for vertical space to push the login card down
+                    // Adjust the height value as needed to position the card better
+                    SizedBox(height: MediaQuery
+                        .of(context)
+                        .size
+                        .height * 0.50),
+                    // Example: 15% of screen height
+                    Card(
+                      color: Colors.white.withOpacity(0.85),
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              "Login",
+                              style: TextStyle(
+                                  fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 24),
+                            TextField(
+                              controller: email,
+                              decoration: const InputDecoration(
+                                labelText: "example@gmail.com",
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.email_rounded),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            TextField(
+                              controller: password,
+                              obscureText: _obscurePassword,
+                              decoration: InputDecoration(
+                                labelText: "Password",
+                                border: const OutlineInputBorder(),
+                                prefixIcon: const Icon(Icons.lock),
+                                suffixIcon: IconButton(
+                                  icon: Icon(_obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: loginUser,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurpleAccent,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size.fromHeight(48),
+                              ),
+                              child: const Text(
+                                "Login",
+                                style: TextStyle(fontSize: 15.0,
+                                    fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: password,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: "Password",
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.lock),
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: loginUser,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurpleAccent,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        child: const Text(
-                          "Login",
-                          style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

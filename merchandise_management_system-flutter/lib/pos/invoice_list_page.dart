@@ -34,7 +34,7 @@ class _InvoiceListPageState extends State<InvoiceListPage> {
     // Navigate to Add Invoice Page and wait for result
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const InvoiceAddPage()),
+      MaterialPageRoute(builder: (_) => const InvoicePage()),
     );
 
     // If result is true (invoice created successfully), refresh the list
