@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+// File: lib/pos/product_detail_page.dart
 
-import '../entity/product.dart';
-import '../entity/Category.dart';
-import '../service/cart_service.dart';
-import 'add_invoice.dart';
+import 'package:flutter/material.dart';
+import '../entity/product.dart'; // Your Product entity/model
+import '../entity/Category.dart'; // Your Category enum
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -16,8 +14,9 @@ class ProductDetailPage extends StatefulWidget {
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
+  // We'll use this state to potentially hold updated product data 
+  // if you implement an edit form later. For now, it just displays.
   late Product _currentProduct;
-  int _quantityToSell = 1;
 
   @override
   void initState() {
@@ -25,51 +24,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     _currentProduct = widget.product;
   }
 
-  void _startEditMode() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit feature coming soon!')),
-    );
-  }
-
-  int getAvailableStock(CartService cart) {
-    final cartItem = cart.items.firstWhere(
-          (item) => item.id == _currentProduct.id,
-      orElse: () => _currentProduct.copyWith(quantity: 0),
-    );
-    return _currentProduct.quantity - cartItem.quantity;
-  }
-
-  void _addToCart() {
-    final cart = Provider.of<CartService>(context, listen: false);
-
-    final availableStock = getAvailableStock(cart);
-
-    if (_quantityToSell > availableStock) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Quantity exceeds available stock!')),
-      );
-      return;
-    }
-
-    final itemForCart = _currentProduct.copyWith(quantity: _quantityToSell);
-    cart.addItem(itemForCart, quantity: _quantityToSell);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${_quantityToSell}x ${_currentProduct.name} added to cart!'),
-        action: SnackBarAction(
-          label: 'Checkout',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddInvoicePage()),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
+  // Helper method to build a detail row
   Widget _buildDetailRow(String label, String value, {bool isHighlight = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -102,14 +57,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
+  // Placeholder for the Edit functionality (to be implemented later)
+  void _startEditMode() {
+    // TODO: Implement navigation to an editable form, or show a dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edit feature coming soon!')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartService>(context);
-    final availableStock = getAvailableStock(cart);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Product Details'),
+        title: Text(_currentProduct.name),
         backgroundColor: Colors.blueAccent,
         actions: [
           IconButton(
@@ -129,6 +89,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // --- Title/Header ---
                 Text(
                   _currentProduct.name,
                   style: const TextStyle(
@@ -138,18 +99,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                 ),
                 const Divider(height: 20, thickness: 2),
+
+                // --- Key Stock/Pricing Details ---
                 _buildDetailRow('Product ID', _currentProduct.id?.toString() ?? 'N/A', isHighlight: true),
                 _buildDetailRow('Quantity in Stock', _currentProduct.quantity.toString(), isHighlight: true),
                 _buildDetailRow('Unit Price', '\$${_currentProduct.price.toStringAsFixed(2)}', isHighlight: true),
                 _buildDetailRow('Total Stock Value', '\$${_currentProduct.totalPrice.toStringAsFixed(2)}', isHighlight: true),
+
                 const Divider(height: 20),
+
+                // --- Classification Details ---
                 _buildDetailRow('Brand', _currentProduct.brand),
                 _buildDetailRow('Category', _currentProduct.category.toString().split('.').last),
                 _buildDetailRow('Model', _currentProduct.model ?? 'N/A'),
+
                 const Divider(height: 20),
+
+                // --- Invoice & Other Details ---
                 _buildDetailRow('Invoice ID', _currentProduct.invoiceId?.toString() ?? 'N/A'),
+
                 const SizedBox(height: 10),
-                const Text('Details/Description:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                const Text(
+                  'Details/Description:',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                ),
                 const SizedBox(height: 5),
                 Container(
                   padding: const EdgeInsets.all(10),
@@ -164,87 +137,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // --- Selling Controls (Add to Cart Button is here) ---
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Quantity Controls
-                    Row(
-                      children: [
-                        const Text('Sell:', style: TextStyle(fontSize: 16)),
-                        const SizedBox(width: 10),
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
-                          onPressed: _quantityToSell > 1
-                              ? () => setState(() => _quantityToSell--)
-                              : null,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _quantityToSell.toString(),
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add_circle_outline, color: Colors.green),
-                          onPressed: _quantityToSell < availableStock
-                              ? () => setState(() => _quantityToSell++)
-                              : null,
-                        ),
-                      ],
-                    ),
-
-                    // Add to Cart Button
-                    ElevatedButton.icon(
-                      onPressed: _addToCart,
-                      icon: const Icon(Icons.add_shopping_cart),
-                      label: const Text('Add to Cart'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(12.0),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              spreadRadius: 5,
-            ),
-          ],
-        ),
-        child: ElevatedButton.icon(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddInvoicePage()),
-            );
-          },
-          icon: const Icon(Icons.receipt_long, size: 28),
-          label: const Text('VIEW CHECKOUT / CART', style: TextStyle(fontSize: 18)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
       ),

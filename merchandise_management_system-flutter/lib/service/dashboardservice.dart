@@ -7,7 +7,7 @@ import '../entity/dashboard.dart';
 
 
 class DashboardService {
-  final String baseUrl = 'http://localhost:8085/api/dashboard'; // Adjust URL
+  final String baseUrl = 'http://10.0.2.2:8085/api/dashboard'; // Adjust URL
 
   Future<DashboardModel> getDashboardData() async {
     // This is a placeholder for actual API call

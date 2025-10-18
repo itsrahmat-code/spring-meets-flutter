@@ -1,423 +1,469 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../entity/invoice.dart';
-import '../service/cart_service.dart';
-import '../service/invoice_service.dart';
-import '../entity/product.dart'; // Import Product to access details
+// File: lib/pos/invoice_add_page.dart
 
-class AddInvoicePage extends StatefulWidget {
-  const AddInvoicePage({super.key});
+import 'package:flutter/material.dart';
+import '../entity/invoice.dart';
+import '../entity/product.dart'; // Ensure you have this import
+import '../service/product_service.dart'; // Ensure you have this import
+import '../service/invoice_service.dart';
+
+
+class InvoiceAddPage extends StatefulWidget {
+  const InvoiceAddPage({super.key});
 
   @override
-  State<AddInvoicePage> createState() => _AddInvoicePageState();
+  State<InvoiceAddPage> createState() => _InvoiceAddPageState();
 }
 
-class _AddInvoicePageState extends State<AddInvoicePage> {
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _discountController = TextEditingController(text: '0.00');
-  final _paidController = TextEditingController();
-
+class _InvoiceAddPageState extends State<InvoiceAddPage> {
+  final _formKey = GlobalKey<FormState>();
+  final ProductService _productService = ProductService();
   final InvoiceService _invoiceService = InvoiceService();
-  final double _taxRate = 5.0;
 
+  // Customer Controllers
+  final TextEditingController _nameController = TextEditingController(text: 'Walk-in Customer');
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+
+  // Payment Controllers
+  final TextEditingController _discountController = TextEditingController(text: '0.0');
+  final TextEditingController _paidController = TextEditingController();
+
+  // Product State
+  List<Product> _allStockProducts = [];
+  List<Product> _selectedProductDetails = [];
+  Map<int, int> _selectedQuantities = {}; // Map<ProductID, QuantitySold>
+
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  // Invoice Totals
+  double _subtotal = 0.0;
   double _discount = 0.0;
+  double _taxRate = 5.0; // Matches your Spring entity default
+  double _taxAmount = 0.0;
+  double _total = 0.0;
   double _paid = 0.0;
-  bool _isLoading = false;
-  Invoice? _invoiceResult;
+  double _due = 0.0;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _recalculate();
-    });
-    _discountController.addListener(_recalculate);
-    _paidController.addListener(() {
-      setState(() {
-        _paid = double.tryParse(_paidController.text) ?? 0.0;
-      });
-    });
+    _fetchStockProducts();
+    _discountController.addListener(_calculateTotals);
+    _paidController.addListener(_calculateTotals);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _addressController.dispose();
     _discountController.dispose();
     _paidController.dispose();
     super.dispose();
   }
 
-  void _recalculate() {
-    // Listen must be false in non-build methods
-    final cart = Provider.of<CartService>(context, listen: false);
-    setState(() {
-      _discount = double.tryParse(_discountController.text) ?? 0.0;
-      final subtotal = cart.subtotal;
-      final taxedBase = subtotal - _discount;
-      final taxAmt = taxedBase * (_taxRate / 100.0);
-      final total = taxedBase + taxAmt;
+  // --- Data & Calculation Logic ---
 
-      // Only pre-fill paid amount if it's currently empty or zero
-      if (_paidController.text.isEmpty || _paidController.text == '0.00') {
-        _paidController.text = total.toStringAsFixed(2);
+  Future<void> _fetchStockProducts() async {
+    try {
+      // NOTE: Assuming ProductService.getAllProducts returns List<Product>
+      _allStockProducts = await _productService.getAllProducts();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load stock products: $e')),
+        );
       }
-      _paid = double.tryParse(_paidController.text) ?? 0.0;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _calculateTotals() {
+    if (!mounted) return;
+
+    // 1. Calculate Base Subtotal
+    double newSubtotal = 0.0;
+    for (var product in _selectedProductDetails) {
+      int quantitySold = _selectedQuantities[product.id] ?? 0;
+      newSubtotal += product.price * quantitySold;
+    }
+
+    // 2. Parse discount and paid amounts
+    double parsedDiscount = double.tryParse(_discountController.text) ?? 0.0;
+    double parsedPaid = double.tryParse(_paidController.text) ?? 0.0;
+
+    // Prevent discount > subtotal
+    if (parsedDiscount > newSubtotal) {
+      parsedDiscount = newSubtotal;
+    }
+
+    // 3. Calculate Tax
+    double taxableAmount = newSubtotal - parsedDiscount;
+    double newTaxAmount = taxableAmount * (_taxRate / 100.0);
+
+    // 4. Calculate Final Total
+    double newTotal = taxableAmount + newTaxAmount;
+
+    // 5. Calculate Due
+    double newDue = newTotal - parsedPaid;
+
+    setState(() {
+      _subtotal = newSubtotal;
+      _discount = parsedDiscount;
+      _taxAmount = newTaxAmount;
+      _total = newTotal;
+      _paid = parsedPaid;
+      _due = newDue;
     });
   }
 
-  Future<void> _completeSell() async {
-    final cart = Provider.of<CartService>(context, listen: false);
-    if (cart.isEmpty) {
+  // --- Add Product Dialog ---
+  Future<void> _showAddProductDialog() async {
+    Product? selectedProduct;
+    int quantityToSell = 1;
+
+    // Filter out products already selected and those with zero stock
+    List<Product> availableProducts = _allStockProducts
+        .where((p) => !_selectedQuantities.containsKey(p.id) && (p.quantity ?? 0) > 0)
+        .toList();
+
+    if (availableProducts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cart is empty. Please add items.')),
+        const SnackBar(content: Text('No more unique products available in stock.')),
+      );
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Add Product to Invoice'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<Product>(
+                    decoration: const InputDecoration(labelText: 'Select Product'),
+                    value: selectedProduct,
+                    items: availableProducts.map((p) => DropdownMenuItem(
+                      value: p,
+                      child: Text('${p.name} (${p.brand}) - Stock: ${p.quantity}'),
+                    )).toList(),
+                    onChanged: (Product? newValue) {
+                      setState(() {
+                        selectedProduct = newValue;
+                        quantityToSell = 1; // Reset quantity
+                      });
+                    },
+                    validator: (value) => value == null ? 'Please select a product' : null,
+                  ),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    initialValue: quantityToSell.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    onChanged: (value) {
+                      int? newQty = int.tryParse(value);
+                      if (selectedProduct != null && newQty != null && newQty > 0 && newQty <= selectedProduct!.quantity) {
+                        quantityToSell = newQty;
+                      }
+                    },
+                    validator: (value) {
+                      int? newQty = int.tryParse(value ?? '');
+                      if (newQty == null || newQty <= 0) return 'Enter valid quantity.';
+                      if (selectedProduct != null && newQty > selectedProduct!.quantity) return 'Only ${selectedProduct!.quantity} in stock.';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                ),
+                ElevatedButton(
+                  child: const Text('Add'),
+                  onPressed: () {
+                    if (selectedProduct != null && quantityToSell > 0) {
+                      // Add item to main widget state
+                      _addItemToInvoice(selectedProduct!, quantityToSell);
+                      Navigator.of(dialogContext).pop();
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _addItemToInvoice(Product product, int quantity) {
+    setState(() {
+      _selectedQuantities[product.id!] = quantity;
+      _selectedProductDetails.add(product);
+      _calculateTotals();
+    });
+  }
+
+  void _removeItemFromInvoice(int productId) {
+    setState(() {
+      _selectedQuantities.remove(productId);
+      _selectedProductDetails.removeWhere((p) => p.id == productId);
+      _calculateTotals();
+    });
+  }
+
+  // --- Submission Logic ---
+  Future<void> _submitInvoice() async {
+    if (!_formKey.currentState!.validate() || _selectedQuantities.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_selectedQuantities.isEmpty ? 'Please add at least one product.' : 'Please fix form errors.')),
+      );
+      return;
+    }
+
+    if (_paid < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Paid amount cannot be negative.')),
       );
       return;
     }
 
     setState(() {
-      _isLoading = true;
+      _isSaving = true;
     });
 
     try {
-      final subtotal = cart.subtotal;
-      final taxedBase = subtotal - _discount;
-      final taxAmt = taxedBase * (_taxRate / 100.0);
-      final total = taxedBase + taxAmt;
-      _paid = double.tryParse(_paidController.text) ?? 0.0;
+      List<InvoiceProductItem> itemsToSell = _selectedProductDetails.map((p) =>
+          InvoiceProductItem(
+            id: p.id!,
+            quantity: _selectedQuantities[p.id]!,
+          )).toList();
 
-      if (_paid < total) {
-        throw Exception('Paid amount is less than total.');
+      await _invoiceService.createInvoice(
+        _nameController.text.trim(),
+        _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+        _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+        _discount,
+        _paid,
+        itemsToSell,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invoice created successfully!')),
+        );
+        Navigator.pop(context, true); // Success, refresh list
       }
-
-      // Prepare invoice items
-      final items = cart.items.map((p) {
-        // p.id should not be null, but you may add null-check
-        return InvoiceProductItem(productId: p.id!, quantity: p.quantity);
-      }).toList();
-
-      final invoice = await _invoiceService.createInvoice(
-        customerName: _nameController.text.trim().isEmpty
-            ? 'Guest Customer'
-            : _nameController.text.trim(),
-        customerEmail: _emailController.text.trim().isEmpty
-            ? null
-            : _emailController.text.trim(),
-        customerPhone: _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
-        customerAddress: _addressController.text.trim().isEmpty
-            ? null
-            : _addressController.text.trim(),
-        subtotal: subtotal,
-        discount: _discount,
-        taxRate: _taxRate,
-        taxAmount: taxAmt,
-        total: total,
-        paid: _paid,
-        items: items,
-      );
-
-      setState(() {
-        _invoiceResult = invoice;
-        _isLoading = false;
-      });
-
-      cart.clearCart();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invoice created: ${invoice.id}')),
-      );
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating invoice: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
-  void _downloadPdf() {
-    if (_invoiceResult == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content:
-        Text('Downloading PDF for Invoice ${_invoiceResult!.id} (not implemented)'),
+  // --- UI Build ---
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('New Sales Invoice'),
+        backgroundColor: Colors.teal,
       ),
-    );
-  }
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // 1. Customer Details
+              _buildSectionTitle('Customer Details'),
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Customer Name*'),
+                validator: (v) => v!.isEmpty ? 'Name is required' : null,
+              ),
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(labelText: 'Phone (Optional)'),
+              ),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: 'Email (Optional)'),
+              ),
+              TextFormField(
+                controller: _addressController,
+                decoration: const InputDecoration(labelText: 'Address (Optional)'),
+              ),
 
-  // --- UI Helper for Input Fields ---
-  Widget _buildField(
-      TextEditingController ctrl, String label, IconData icon, TextInputType type,
-      {bool optional = false, bool isEmail = false}) {
-    return TextFormField(
-      controller: ctrl,
-      keyboardType: type,
-      decoration: InputDecoration(
-        labelText: optional ? '$label (Optional)' : '$label',
-        prefixIcon: Icon(icon, color: Colors.teal),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.teal, width: 2.0),
+              const SizedBox(height: 30),
+
+              // 2. Product Selection
+              _buildSectionTitle('Invoice Items'),
+              _buildProductList(),
+
+              ElevatedButton.icon(
+                onPressed: _showAddProductDialog,
+                icon: const Icon(Icons.add_shopping_cart),
+                label: const Text('Add Product'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                  backgroundColor: Colors.lightGreen,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // 3. Totals Summary
+              _buildTotalsSummary(),
+
+              // 4. Payment Input
+              _buildSectionTitle('Payment & Discount'),
+              TextFormField(
+                  controller: _discountController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Discount Amount (-\$)', prefixText: '\$'),
+                  validator: (v) {
+                    if (double.tryParse(v ?? '0.0') == null) return 'Invalid number';
+                    return null;
+                  }
+              ),
+              TextFormField(
+                controller: _paidController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Amount Paid* (+\$)', prefixText: '\$'),
+                validator: (v) {
+                  if (double.tryParse(v ?? '0.0') == null) return 'Invalid number';
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 40),
+
+              // 5. Submit Button
+              ElevatedButton.icon(
+                onPressed: _isSaving ? null : _submitInvoice,
+                icon: _isSaving
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.receipt),
+                label: Text(_isSaving ? 'Saving Invoice...' : 'Create Invoice'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // --- UI Helper for Summary Rows ---
-  Widget _buildSummaryRow(String label, double val,
-      {bool isInput = false, TextEditingController? ctrl, bool bold = false, Color? color}) {
-    final textStyle = TextStyle(
-        fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-        color: color ?? Colors.black,
-        fontSize: bold ? 18 : 16);
+  // --- Helper Widgets ---
 
+  Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(top: 20.0, bottom: 10.0),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+      ),
+    );
+  }
+
+  Widget _buildProductList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _selectedProductDetails.length,
+      itemBuilder: (context, index) {
+        final product = _selectedProductDetails[index];
+        final quantity = _selectedQuantities[product.id] ?? 0;
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          elevation: 1,
+          child: ListTile(
+            title: Text('${product.name} (${product.brand})'),
+            subtitle: Text(
+                'Qty: $quantity x \$${product.price.toStringAsFixed(2)} = \$${(product.price * quantity).toStringAsFixed(2)}'),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => _removeItemFromInvoice(product.id!),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTotalRow(String label, double amount, Color color, {TextStyle? style}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: textStyle),
-          isInput && ctrl != null
-              ? SizedBox(
-            width: 120,
-            child: TextField(
-              controller: ctrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.right,
-              decoration: const InputDecoration(
-                prefixText: '\$',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-              style: textStyle,
-            ),
-          )
-              : Text(
-            '\$${val.toStringAsFixed(2)}',
-            style: textStyle,
+          Text(label, style: style ?? const TextStyle(fontSize: 15)),
+          Text(
+            '${amount < 0 ? '-' : ''}\$${amount.abs().toStringAsFixed(2)}',
+            style: style?.copyWith(color: color) ?? TextStyle(color: color, fontSize: 15),
           ),
         ],
       ),
     );
   }
 
-  // --- NEW UI Helper for Product Details ---
-  Widget _buildProductDetailCard(Product product) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              product.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple),
-            ),
-            const Divider(height: 8, thickness: 0.5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Qty: ${product.quantity}', style: const TextStyle(fontStyle: FontStyle.italic)),
-                Text('Unit Price: \$${product.price.toStringAsFixed(2)}'),
-                Text('Line Total: \$${product.totalPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-            if (product.details != null && product.details!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
-                  'Details: ${product.details}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildTotalsSummary() {
+    const boldStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16);
 
-
-  @override
-  Widget build(BuildContext context) {
-    final cart = Provider.of<CartService>(context);
-    final subtotal = cart.subtotal;
-    final taxedBase = subtotal - _discount;
-    final taxAmt = taxedBase * (_taxRate / 100.0);
-    final total = taxedBase + taxAmt;
-    final due = total - _paid;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Checkout / Invoice'),
-        backgroundColor: Colors.teal,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: _invoiceResult != null
-            ? _buildResultView()
-            : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Customer Info ---
-            const Text('Customer Info',
-                style:
-                TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal)),
-            const SizedBox(height: 10),
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    _buildField(_nameController, 'Name', Icons.person, TextInputType.name),
-                    const SizedBox(height: 10),
-                    _buildField(
-                        _emailController, 'Email', Icons.email, TextInputType.emailAddress,
-                        optional: true),
-                    const SizedBox(height: 10),
-                    _buildField(
-                        _phoneController, 'Phone', Icons.phone, TextInputType.phone,
-                        optional: true),
-                    const SizedBox(height: 10),
-                    _buildField(_addressController, 'Address', Icons.home,
-                        TextInputType.streetAddress,
-                        optional: true),
-                  ],
-                ),
-              ),
-            ),
-
-            const Divider(height: 30),
-
-            // --- Product Details ---
-            const Text('Product Details',
-                style:
-                TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal)),
-            const SizedBox(height: 10),
-            // 🛑 MODIFIED: Using the new helper to display rich product details
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  children: cart.items.map((product) => _buildProductDetailCard(product)).toList(),
-                ),
-              ),
-            ),
-
-
-            const Divider(height: 30),
-
-            // --- Invoice Summary ---
-            const Text('Invoice Summary',
-                style:
-                TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal)),
-            const SizedBox(height: 10),
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    _buildSummaryRow('Subtotal', subtotal),
-                    _buildSummaryRow('Discount', _discount,
-                        isInput: true, ctrl: _discountController, color: Colors.red),
-                    _buildSummaryRow('Tax (${_taxRate.toStringAsFixed(1)}%)', taxAmt),
-                    const Divider(height: 20),
-                    _buildSummaryRow('Total', total, bold: true, color: Colors.deepPurple),
-                    _buildSummaryRow('Paid', _paid, isInput: true, ctrl: _paidController),
-                    _buildSummaryRow('Due', due, bold: true, color: due > 0 ? Colors.red : Colors.green),
-                  ],
-                ),
-              ),
-            ),
-
-
-            const SizedBox(height: 24),
-            // --- Complete Sale Button ---
-            SizedBox(
-              width: double.infinity,
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Colors.teal))
-                  : ElevatedButton.icon(
-                onPressed: _completeSell,
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('Complete Sale'),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 14),
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-      ),
-      // --- Floating Action Button for PDF ---
-      floatingActionButton: _invoiceResult != null
-          ? FloatingActionButton.extended(
-        onPressed: _downloadPdf,
-        icon: const Icon(Icons.picture_as_pdf),
-        label: const Text('Download PDF'),
-        backgroundColor: Colors.deepPurple,
-      )
-          : null,
-    );
-  }
-
-  // --- Invoice Result View ---
-  Widget _buildResultView() {
-    final inv = _invoiceResult!;
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Card(
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        color: Colors.teal.shade50,
+        elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.all(15.0),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 80),
-              const SizedBox(height: 20),
-              Text('Success! Invoice #${inv.id}',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal)),
-              const SizedBox(height: 12),
-              Text('Customer: ${inv.customerName}', style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 8),
-              Text('Total: \$${inv.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Navigate back to the home/product listing page
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                },
-                icon: const Icon(Icons.home),
-                label: const Text('Start New Sale'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-              ),
+              _buildTotalRow('Subtotal', _subtotal, Colors.black87),
+              _buildTotalRow('Discount (-\$)', -_discount, Colors.red),
+              _buildTotalRow('Tax (${_taxRate.toStringAsFixed(1)}%)', _taxAmount, Colors.orange),
+              const Divider(),
+              _buildTotalRow('GRAND TOTAL', _total, Colors.teal, style: boldStyle.copyWith(fontSize: 18)),
+              _buildTotalRow('Amount Paid', _paid, Colors.blue),
+              _buildTotalRow('Amount Due', _due, _due > 0 ? Colors.red : Colors.green),
             ],
           ),
         ),

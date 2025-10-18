@@ -1,27 +1,25 @@
+// File: lib/service/invoice_service.dart
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../entity/invoice.dart';
-import '../entity/product.dart';
+import '../entity/product.dart'; // Ensure you have this import
 
 class InvoiceService {
-  final String baseUrl = 'http://localhost:8085/api/invoices';
+  final String baseUrl = 'http://10.0.2.2:8085/api/invoices'; // Adjust URL to your backend
 
   // --- CREATE ---
-  Future<Invoice> createInvoice({
-    required String customerName,
-    String? customerEmail,
-    String? customerPhone,
-    String? customerAddress,
-    required double subtotal,
-    required double discount,
-    required double taxRate,
-    required double taxAmount,
-    required double total,
-    required double paid,
-    required List<InvoiceProductItem> items, // or Product if your list is based on Product
-  }) async {
-    // Convert product list to JSON (you can change this if using Product model instead)
+  Future<InvoiceModel> createInvoice(
+      String customerName,
+      String? customerEmail,
+      String? customerPhone,
+      String? customerAddress,
+      double discount,
+      double paid,
+      List<InvoiceProductItem> items) async {
+
+    // Format the products list for the backend (using ProductDTO which needs ID and quantity)
     List<Map<String, dynamic>> productsJson = items.map((item) => item.toJson()).toList();
 
     final body = jsonEncode({
@@ -29,11 +27,7 @@ class InvoiceService {
       'customerEmail': customerEmail,
       'customerPhone': customerPhone,
       'customerAddress': customerAddress,
-      'subtotal': subtotal,
       'discount': discount,
-      'taxRate': taxRate,
-      'taxAmount': taxAmount,
-      'total': total,
       'paid': paid,
       'products': productsJson,
     });
@@ -45,30 +39,30 @@ class InvoiceService {
     );
 
     if (response.statusCode == 200) {
-      return Invoice.fromJson(jsonDecode(response.body));
+      return InvoiceModel.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to create invoice. Status: ${response.statusCode}, Body: ${response.body}');
     }
   }
 
   // --- READ ALL ---
-  Future<List<Invoice>> getAllInvoices() async {
+  Future<List<InvoiceModel>> getAllInvoices() async {
     final response = await http.get(Uri.parse(baseUrl));
 
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(response.body);
-      return body.map((dynamic item) => Invoice.fromJson(item)).toList();
+      return body.map((dynamic item) => InvoiceModel.fromJson(item)).toList();
     } else {
       throw Exception('Failed to load invoices. Status: ${response.statusCode}');
     }
   }
 
   // --- READ BY ID ---
-  Future<Invoice> getInvoiceById(int id) async {
+  Future<InvoiceModel> getInvoiceById(int id) async {
     final response = await http.get(Uri.parse('$baseUrl/$id'));
 
     if (response.statusCode == 200) {
-      return Invoice.fromJson(jsonDecode(response.body));
+      return InvoiceModel.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to load invoice $id. Status: ${response.statusCode}');
     }
@@ -82,6 +76,4 @@ class InvoiceService {
       throw Exception('Failed to delete invoice $id. Status: ${response.statusCode}');
     }
   }
-
-
 }
