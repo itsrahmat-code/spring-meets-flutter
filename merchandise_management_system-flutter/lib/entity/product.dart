@@ -13,7 +13,7 @@ class Product {
   final String brand;
   final String? model;
   final String? details;
-  final int quantity;
+   int quantity;
   final double price;
   final int? invoiceId;
 
