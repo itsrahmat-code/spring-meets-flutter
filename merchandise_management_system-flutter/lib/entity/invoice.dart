@@ -1,39 +1,14 @@
-// File: lib/models/invoice_model.dart
+// lib/models/invoice.dart
 
 
-// File: lib/models/invoice_model.dart
 
-
-import 'package:merchandise_management_system/entity/product.dart';
-
-/// Model used to represent a product being SOLD/ADDED to a new invoice.
-/// It only requires the product ID and the quantity being sold.
-class InvoiceProductItem {
-  final int id;         // The actual product ID (for stock deduction on the backend)
-  final int quantity;   // The quantity being sold/invoiced
-
-  InvoiceProductItem({
-    required this.id,
-    required this.quantity,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'quantity': quantity,
-    };
-  }
-}
-
-/// Model representing the full Invoice data received from the API (InvoiceDTO).
-class InvoiceModel {
+class Invoice {
   final int? id;
-  final String? invoiceNumber;
   final DateTime? date;
-  final String customerName;
-  final String? customerEmail;
-  final String? customerPhone;
-  final String? customerAddress;
+  final String name;
+  final String email;
+  final String phone;
+  final String address;
 
   final double subtotal;
   final double discount;
@@ -42,67 +17,104 @@ class InvoiceModel {
   final double total;
   final double paid;
 
-  // Calculated client-side for display convenience
-  final double due;
-
-  // Products received from the API (a snapshot of sold products)
+  final String invoiceNumber;
   final List<Product> products;
 
-  InvoiceModel({
+  Invoice({
     this.id,
-    this.invoiceNumber,
     this.date,
-    required this.customerName,
-    this.customerEmail,
-    this.customerPhone,
-    this.customerAddress,
-    this.subtotal = 0.0,
-    this.discount = 0.0,
-    this.taxRate = 0.0,
-    this.taxAmount = 0.0,
-    this.total = 0.0,
-    this.paid = 0.0,
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.address,
+    required this.subtotal,
+    required this.discount,
+    required this.taxRate,
+    required this.taxAmount,
+    required this.total,
+    required this.paid,
+    required this.invoiceNumber,
     required this.products,
-  }) : due = total - paid;
+  });
 
-
-  factory InvoiceModel.fromJson(Map<String, dynamic> json) {
-    // Deserialize products list (using the existing Product model/entity)
-    var productsList = json['products'] as List? ?? [];
-    List<Product> productsSnapshot = productsList.map((i) => Product.fromJson(i)).toList();
-
-    // Parse Java's LocalDateTime string safely
-    DateTime? parsedDate;
-    if (json['date'] != null) {
-      try {
-        parsedDate = DateTime.parse(json['date']);
-      } catch (e) {
-        // Log the error but proceed with null date
-        print('Error parsing date: ${json['date']}');
-      }
-    }
-
-    // Ensure all numeric values are handled as double
-    double subtotal = json['subtotal']?.toDouble() ?? 0.0;
-    double discount = json['discount']?.toDouble() ?? 0.0;
-    double total = json['total']?.toDouble() ?? 0.0;
-    double paid = json['paid']?.toDouble() ?? 0.0;
-
-    return InvoiceModel(
+  // Factory constructor to create an Invoice from JSON (API response)
+  factory Invoice.fromJson(Map<String, dynamic> json) {
+    return Invoice(
       id: json['id'],
-      invoiceNumber: json['invoiceNumber'],
-      date: parsedDate,
-      customerName: json['customerName'] ?? 'N/A',
-      customerEmail: json['customerEmail'],
-      customerPhone: json['customerPhone'],
-      customerAddress: json['customerAddress'],
-      subtotal: subtotal,
-      discount: discount,
+      date: json['date'] != null ? DateTime.parse(json['date']) : null,
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      address: json['address'] ?? '',
+      subtotal: json['subtotal']?.toDouble() ?? 0.0,
+      discount: json['discount']?.toDouble() ?? 0.0,
       taxRate: json['taxRate']?.toDouble() ?? 0.0,
       taxAmount: json['taxAmount']?.toDouble() ?? 0.0,
-      total: total,
-      paid: paid,
-      products: productsSnapshot,
+      total: json['total']?.toDouble() ?? 0.0,
+      paid: json['paid']?.toDouble() ?? 0.0,
+      invoiceNumber: json['invoiceNumber'] ?? '',
+      // Map the list of product JSON objects to Product models
+      products: (json['products'] as List<dynamic>?)
+          ?.map((p) => Product.fromJson(p))
+          .toList() ??
+          [],
     );
+  }
+
+  // Method to convert an Invoice object to JSON (for POST/PUT requests)
+  Map<String, dynamic> toJson() {
+    return {
+      // 'id' is often omitted for creation (POST) but included for update (PUT)
+      'id': id,
+      'date': date?.toIso8601String(),
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'address': address,
+      // Note: subtotal, taxAmount, total might be auto-calculated by the API
+      // but they are included here for completeness/update.
+      'subtotal': subtotal,
+      'discount': discount,
+      'taxRate': taxRate,
+      'taxAmount': taxAmount,
+      'total': total,
+      'paid': paid,
+      'invoiceNumber': invoiceNumber,
+      'products': products.map((p) => p.toJson()).toList(),
+    };
+  }
+}
+
+// You need this Product model too, based on your Product entity.
+// For simplicity, a basic structure is provided here:
+class Product {
+  final int? id;
+  final String name;
+  final double price;
+  final int quantity;
+
+  Product({
+    this.id,
+    required this.name,
+    required this.price,
+    required this.quantity,
+  });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'],
+      name: json['name'] ?? '',
+      price: json['price']?.toDouble() ?? 0.0,
+      quantity: json['quantity'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'price': price,
+      'quantity': quantity,
+    };
   }
 }

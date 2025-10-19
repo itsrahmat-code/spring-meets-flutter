@@ -3,13 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:merchandise_management_system/entity/Category.dart';
 import 'package:merchandise_management_system/entity/product.dart';
+import 'package:merchandise_management_system/pages/manager_page.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/service/product_service.dart';
 
-
-
 class ProductAdd extends StatefulWidget {
-  // FIX 1: Add the required 'profile' parameter to the constructor
   final Map<String, dynamic> profile;
 
   const ProductAdd({super.key, required this.profile});
@@ -29,7 +27,6 @@ class _ProductAddState extends State<ProductAdd> {
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _invoiceIdController = TextEditingController();
 
   // State for Dropdown
   Category _selectedCategory = Category.Laptop;
@@ -44,14 +41,12 @@ class _ProductAddState extends State<ProductAdd> {
     _detailsController.dispose();
     _quantityController.dispose();
     _priceController.dispose();
-    _invoiceIdController.dispose();
     super.dispose();
   }
 
-  // --- Submission Logic ---
   Future<void> _submitProduct() async {
     if (!_formKey.currentState!.validate()) {
-      return; // Stop if form is not valid
+      return;
     }
 
     setState(() {
@@ -67,33 +62,23 @@ class _ProductAddState extends State<ProductAdd> {
         category: _selectedCategory,
         quantity: int.parse(_quantityController.text.trim()),
         price: double.parse(_priceController.text.trim()),
-        // Check if invoice ID is entered, if not, send null
-        invoiceId: _invoiceIdController.text.trim().isEmpty
-            ? null
-            : int.parse(_invoiceIdController.text.trim()),
       );
 
-      // Call the API service to add the product
       await _productService.addProduct(newProduct);
 
-      // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Product added successfully!')),
         );
 
-        // FIX 2: Navigate to ProductListPage after successful addition
-        // We use pushReplacement to replace the current AddProduct page with ProductListPage
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            // Pass the profile and a result of 'true' (if ProductListPage checks for it)
-              builder: (_) => ProductListPage(profile: widget.profile)
+            builder: (_) => ProductListPage(profile: widget.profile),
           ),
         );
       }
     } catch (e) {
-      // Show error message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -111,89 +96,79 @@ class _ProductAddState extends State<ProductAdd> {
     }
   }
 
+  void _navigateToManagerPage() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ManagerPage(profile: widget.profile),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add New Product'),
-        backgroundColor: Colors.teal,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              // --- Name (Required) ---
-              _buildTextField(_nameController, 'Product Name', validator: _validateRequired),
-
-              // --- Brand (Required) ---
-              _buildTextField(_brandController, 'Brand', validator: _validateRequired),
-
-              // --- Category (Required) ---
-              _buildCategoryDropdown(),
-
-              // --- Model (Optional) ---
-              _buildTextField(_modelController, 'Model (Optional)', isRequired: false),
-
-              // --- Details (Optional) ---
-              _buildTextField(_detailsController, 'Details (Optional)', maxLines: 3, isRequired: false),
-
-              // --- Quantity (Required, Numeric) ---
-              _buildTextField(
-                _quantityController,
-                'Quantity in Stock',
-                keyboardType: TextInputType.number,
-                validator: _validateInt,
-              ),
-
-              // --- Price (Required, Numeric/Decimal) ---
-              _buildTextField(
-                _priceController,
-                'Unit Price',
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: _validateDouble,
-              ),
-
-              const Divider(height: 32),
-
-              // --- Invoice ID (Optional, Numeric) ---
-              _buildTextField(
-                _invoiceIdController,
-                'Invoice ID (Optional)',
-                keyboardType: TextInputType.number,
-                isRequired: false,
-                hintText: 'Link to an existing invoice',
-              ),
-
-              const SizedBox(height: 30),
-
-              // --- Submit Button ---
-              ElevatedButton.icon(
-                onPressed: _isLoading ? null : _submitProduct,
-                icon: _isLoading
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : const Icon(Icons.save),
-                label: Text(_isLoading ? 'Adding Product...' : 'Add Product'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
+    return WillPopScope(
+      onWillPop: () async {
+        _navigateToManagerPage();
+        return false; // prevent default pop
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Add New Product'),
+          backgroundColor: Colors.teal,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _navigateToManagerPage,
+          ),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _buildTextField(_nameController, 'Product Name', validator: _validateRequired),
+                _buildTextField(_brandController, 'Brand', validator: _validateRequired),
+                _buildCategoryDropdown(),
+                _buildTextField(_modelController, 'Model (Optional)', isRequired: false),
+                _buildTextField(_detailsController, 'Details (Optional)', maxLines: 3, isRequired: false),
+                _buildTextField(
+                  _quantityController,
+                  'Quantity in Stock',
+                  keyboardType: TextInputType.number,
+                  validator: _validateInt,
                 ),
-              ),
-            ],
+                _buildTextField(
+                  _priceController,
+                  'Unit Price',
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  validator: _validateDouble,
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _submitProduct,
+                  icon: _isLoading
+                      ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                      : const Icon(Icons.save),
+                  label: Text(_isLoading ? 'Adding Product...' : 'Add Product'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  // --- Helper Widgets and Validators ---
 
   Widget _buildTextField(
       TextEditingController controller,

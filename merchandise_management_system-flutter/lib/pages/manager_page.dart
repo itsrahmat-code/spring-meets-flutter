@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:merchandise_management_system/entity/dashboard.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
+import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
-import 'package:merchandise_management_system/pos/add_product.dart'; // ProductAdd is here
+import 'package:merchandise_management_system/pos/add_product.dart';
 import '../service/dashboardservice.dart';
+
 
 // ManagerPage is now a StatefulWidget to handle dashboard data fetching
 class ManagerPage extends StatefulWidget {
@@ -32,7 +34,6 @@ class _ManagerPageState extends State<ManagerPage> {
 
   void _navigateToPage(Widget page) {
     Navigator.pop(context); // Close the drawer
-    // The ProductAdd widget will handle navigation to ProductListPage
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 // ... (omitted helper methods for brevity) ...
@@ -117,16 +118,22 @@ class _ManagerPageState extends State<ManagerPage> {
                 onTap: () => _navigateToPage(ManagerProfilePage(profile: widget.profile)),
               ),
               const Divider(),
+              // Existing Product Links
               ListTile(
                 leading: const Icon(Icons.add_shopping_cart),
                 title: const Text('Add Product'),
-                // FIX 3a: Pass the profile to ProductAdd
                 onTap: () => _navigateToPage(ProductAdd(profile: widget.profile)),
               ),
               ListTile(
                 leading: const Icon(Icons.list_alt),
                 title: const Text('Product List'),
                 onTap: () => _navigateToPage(ProductListPage(profile: widget.profile)),
+              ),
+              // 🌟 NEW INVOICE LIST DRAWER LINK
+              ListTile(
+                leading: const Icon(Icons.receipt), // Receipt icon for invoices
+                title: const Text('Invoice List'),
+                onTap: () => _navigateToPage(InvoiceListPage()), // Assuming InvoiceListPage takes no args
               ),
               const Divider(),
               ListTile(
@@ -153,7 +160,7 @@ class _ManagerPageState extends State<ManagerPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-// ... (omitted FutureBuilder for dashboard content) ...
+              // ... (FutureBuilder for dashboard content goes here) ...
 
               // Product Action Buttons (quick access)
               Row(
@@ -163,7 +170,6 @@ class _ManagerPageState extends State<ManagerPage> {
                     "Add Product",
                     Icons.add,
                     Colors.deepPurple,
-                    // FIX 3b: Pass the profile to ProductAdd
                         () => _navigateToPage(ProductAdd(profile: widget.profile)),
                   ),
                   _buildActionButton(
@@ -171,6 +177,29 @@ class _ManagerPageState extends State<ManagerPage> {
                     Icons.list,
                     Colors.deepPurple,
                         () => _navigateToPage(ProductListPage(profile: widget.profile)),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10), // Add some spacing
+
+              // 🌟 NEW INVOICE ACTION BUTTON ROW
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    "Invoice List",
+                    Icons.receipt,
+                    Colors.indigo, // Use a different color for invoices
+                        () => _navigateToPage(InvoiceListPage()),
+                  ),
+                  // You can add an "Add Invoice" button here if needed
+                  _buildActionButton(
+                    "Add Invoice",
+                    Icons.shopping_cart_checkout,
+                    Colors.teal,
+                    // Assuming you have an AddInvoicePage
+                        () => _navigateToPage(const InvoiceListPage()),
                   ),
                 ],
               ),

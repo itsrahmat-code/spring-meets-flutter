@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:merchandise_management_system/pos/add_invoice.dart';
 import 'package:merchandise_management_system/service/cart_service.dart';
+
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -111,13 +113,23 @@ class _CartPageState extends State<CartPage> {
                   icon: const Icon(Icons.payment),
                   label: const Text("Checkout"),
                   onPressed: () {
-                    setState(() {
-                      _cartService.clearCart();
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Checkout successful!")),
-                    );
-                    Navigator.pop(context);
+                    if (_cartService.cartItems.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const InvoiceAddPage(cartItems: {},),
+                        ),
+                      ).then((_) {
+                        // Clear cart after returning from AddInvoicePage
+                        setState(() {
+                          _cartService.clearCart();
+                        });
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Your cart is empty.")),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,

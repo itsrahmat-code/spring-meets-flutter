@@ -1,9 +1,5 @@
 // File: lib/models/product_model.dart
 
- // Assuming you create this file
-
-
-
 import 'package:merchandise_management_system/entity/Category.dart';
 
 class Product {

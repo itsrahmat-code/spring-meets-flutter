@@ -1,26 +1,29 @@
 package com.rahmatullahsaruk.stock_management.mapper;
 
+
+
 import com.rahmatullahsaruk.stock_management.dto.InvoiceDTO;
 import com.rahmatullahsaruk.stock_management.dto.ProductDTO;
 import com.rahmatullahsaruk.stock_management.entity.Invoice;
 import com.rahmatullahsaruk.stock_management.entity.Product;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class InvoiceMapper {
 
-    public static InvoiceDTO toDTO(Invoice invoice) {
-        if (invoice == null) return null;
 
+
+    public static InvoiceDTO toDTO(Invoice invoice) {
         InvoiceDTO dto = new InvoiceDTO();
         dto.setId(invoice.getId());
         dto.setInvoiceNumber(invoice.getInvoiceNumber());
         dto.setDate(invoice.getDate());
-        dto.setCustomerName(invoice.getCustomerName());
-        dto.setCustomerEmail(invoice.getCustomerEmail());
-        dto.setCustomerPhone(invoice.getCustomerPhone());
-        dto.setCustomerAddress(invoice.getCustomerAddress());
+
+        dto.setName(invoice.getName());
+        dto.setEmail(invoice.getEmail());
+        dto.setPhone(invoice.getPhone());
+        dto.setAddress(invoice.getAddress());
+
         dto.setSubtotal(invoice.getSubtotal());
         dto.setDiscount(invoice.getDiscount());
         dto.setTaxRate(invoice.getTaxRate());
@@ -29,43 +32,27 @@ public class InvoiceMapper {
         dto.setPaid(invoice.getPaid());
 
 
-        if (invoice.getProducts() != null) {
-            List<ProductDTO> productDTOs = invoice.getProducts().stream()
-                    .map(ProductMapper::toDTO)
-                    .collect(Collectors.toList());
-            dto.setProducts(productDTOs);
-        }
+        dto.setProducts(invoice.getProducts()
+                .stream()
+                .map(InvoiceMapper::toProductDTO)
+                .collect(Collectors.toList()));
 
         return dto;
     }
 
-    public static Invoice toEntity(InvoiceDTO dto) {
-        if (dto == null) return null;
-
-        Invoice invoice = new Invoice();
-        invoice.setId(dto.getId());
-        invoice.setInvoiceNumber(dto.getInvoiceNumber());
-        invoice.setDate(dto.getDate());
-        invoice.setCustomerName(dto.getCustomerName());
-        invoice.setCustomerEmail(dto.getCustomerEmail());
-        invoice.setCustomerPhone(dto.getCustomerPhone());
-        invoice.setCustomerAddress(dto.getCustomerAddress());
-        invoice.setSubtotal(dto.getSubtotal());
-        invoice.setDiscount(dto.getDiscount());
-        invoice.setTaxRate(dto.getTaxRate());
-        invoice.setTaxAmount(dto.getTaxAmount());
-        invoice.setTotal(dto.getTotal());
-        invoice.setPaid(dto.getPaid());
-
-
-        if (dto.getProducts() != null) {
-            List<Product> products = dto.getProducts().stream()
-                    .map(ProductMapper::toEntity)
-                    .peek(p -> p.setInvoice(invoice))
-                    .collect(Collectors.toList());
-            invoice.setProducts(products);
-        }
-
-        return invoice;
+    private static ProductDTO toProductDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(product.getId());   // if you want null → just remove this line
+        dto.setName(product.getName());
+        dto.setCategory(product.getCategory());
+        dto.setBrand(product.getBrand());
+        dto.setModel(product.getModel());
+        dto.setDetails(product.getDetails());
+        dto.setQuantity(product.getQuantity());
+        dto.setPrice(product.getPrice());
+        return dto;
     }
+
+
+
 }
