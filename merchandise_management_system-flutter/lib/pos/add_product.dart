@@ -1,14 +1,18 @@
-// File: lib/pages/product_add_page.dart
+// File: lib/pos/product_add_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:merchandise_management_system/entity/Category.dart';
+import 'package:merchandise_management_system/entity/product.dart';
+import 'package:merchandise_management_system/pos/product_list_page.dart';
+import 'package:merchandise_management_system/service/product_service.dart';
 
-import '../entity/Category.dart';
-import '../entity/product.dart';
-import '../service/product_service.dart';
 
 
 class ProductAdd extends StatefulWidget {
-  const ProductAdd({super.key});
+  // FIX 1: Add the required 'profile' parameter to the constructor
+  final Map<String, dynamic> profile;
+
+  const ProductAdd({super.key, required this.profile});
 
   @override
   State<ProductAdd> createState() => _ProductAddState();
@@ -72,12 +76,21 @@ class _ProductAddState extends State<ProductAdd> {
       // Call the API service to add the product
       await _productService.addProduct(newProduct);
 
-      // Show success message and pop the page
+      // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Product added successfully!')),
         );
-        Navigator.pop(context, true); // Pass true to indicate successful addition
+
+        // FIX 2: Navigate to ProductListPage after successful addition
+        // We use pushReplacement to replace the current AddProduct page with ProductListPage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            // Pass the profile and a result of 'true' (if ProductListPage checks for it)
+              builder: (_) => ProductListPage(profile: widget.profile)
+          ),
+        );
       }
     } catch (e) {
       // Show error message

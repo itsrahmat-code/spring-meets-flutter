@@ -1,8 +1,8 @@
 // File: lib/pos/product_detail_page.dart
 
 import 'package:flutter/material.dart';
-import '../entity/product.dart'; // Your Product entity/model
-import '../entity/Category.dart'; // Your Category enum
+import 'package:merchandise_management_system/entity/product.dart';
+
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;

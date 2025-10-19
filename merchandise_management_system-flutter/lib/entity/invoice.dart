@@ -3,7 +3,8 @@
 
 // File: lib/models/invoice_model.dart
 
-import '../entity/product.dart'; // Re-use your Product entity for the product snapshot in the invoice
+
+import 'package:merchandise_management_system/entity/product.dart';
 
 /// Model used to represent a product being SOLD/ADDED to a new invoice.
 /// It only requires the product ID and the quantity being sold.

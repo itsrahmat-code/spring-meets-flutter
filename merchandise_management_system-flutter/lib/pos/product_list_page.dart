@@ -1,16 +1,18 @@
-// File: lib/pos/product_list_page.dart (or equivalent location)
+// File: lib/pos/product_list_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:merchandise_management_system/entity/Category.dart';
+import 'package:merchandise_management_system/entity/product.dart';
+import 'package:merchandise_management_system/pages/manager_page.dart';
+import 'package:merchandise_management_system/pos/add_product.dart';
+import 'package:merchandise_management_system/pos/product_detail_page.dart';
+import 'package:merchandise_management_system/service/product_service.dart'; // Assuming this points to ProductAdd
 
-import '../entity/Category.dart';
-import '../entity/product.dart';
-import '../service/product_service.dart';
-import 'product_detail_page.dart';
-import 'package:merchandise_management_system/pos/add_product.dart'; // Import your Add Product Page
-
-// Add the WillPopScope to restrict back navigation
 class ProductListPage extends StatefulWidget {
-  const ProductListPage({super.key});
+  // FIX 1: Add the required 'profile' parameter to the constructor
+  final Map<String, dynamic> profile;
+
+  const ProductListPage({super.key, required this.profile});
 
   @override
   State<ProductListPage> createState() => _ProductListPageState();
@@ -62,7 +64,11 @@ class _ProductListPageState extends State<ProductListPage>
       _allProducts = products;
       _applyFilters();
     }).catchError((error) {
-      // Error handled by FutureBuilder
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch products: $error')),
+        );
+      }
       print('Failed to fetch products: $error');
     });
   }
@@ -93,7 +99,6 @@ class _ProductListPageState extends State<ProductListPage>
 
   void _navigateToDetail(Product product) async {
     // Navigate and await result if product was updated/deleted
-    // The detail page should return 'true' if data was modified/deleted
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -107,15 +112,24 @@ class _ProductListPageState extends State<ProductListPage>
     }
   }
 
+  // FIX 2: Custom Back Navigation that pushes ManagerPage
+  void _navigateToManagerPage() {
+    // Use pushAndRemoveUntil to ensure ManagerPage is the root after returning.
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => ManagerPage(profile: widget.profile)),
+          (route) => false,
+    );
+  }
+
   // --- UI Components ---
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      // 🛑 ACTION 1: Back button navigate to Manager/Previous Page
+      // FIX 3: Back button uses the custom navigation method
       onWillPop: () async {
-        // Pop the current page to return to the previous screen (ManagerPage)
-        Navigator.pop(context);
+        _navigateToManagerPage();
         return false; // Prevent default system back behavior
       },
       child: Scaffold(
@@ -123,10 +137,10 @@ class _ProductListPageState extends State<ProductListPage>
           title: const Text('Product Stock'),
           backgroundColor: Colors.blueAccent,
           centerTitle: true,
-          // Since we are overriding WillPopScope, we should also add an explicit Back Button
+          // FIX 4: Explicit Back Button uses the custom navigation method
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context), // Explicitly go back to ManagerPage
+            onPressed: _navigateToManagerPage,
           ),
           actions: [
             IconButton(
@@ -248,12 +262,12 @@ class _ProductListPageState extends State<ProductListPage>
           },
         ),
         floatingActionButton: FloatingActionButton(
-          // 🛑 ACTION 2: Navigate to Add Product Page
+          // Navigate to Add Product Page
           onPressed: () async {
-            // Use MaterialPageRoute with the actual imported widget (ProductAdd)
+            // FIX 5: Pass the required 'profile' to ProductAdd and remove 'const'
             final result = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const ProductAdd())
+                MaterialPageRoute(builder: (_) => ProductAdd(profile: widget.profile))
             );
             if (result == true) {
               _fetchProducts(); // Refresh list if product was added successfully

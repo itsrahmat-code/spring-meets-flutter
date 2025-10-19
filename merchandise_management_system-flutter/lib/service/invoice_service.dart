@@ -7,7 +7,7 @@ import '../entity/invoice.dart';
 import '../entity/product.dart'; // Ensure you have this import
 
 class InvoiceService {
-  final String baseUrl = 'http://10.0.2.2:8085/api/invoices'; // Adjust URL to your backend
+  final String baseUrl = "http://localhost:8085/api/invoices"; // Adjust URL to your backend
 
   // --- CREATE ---
   Future<InvoiceModel> createInvoice(

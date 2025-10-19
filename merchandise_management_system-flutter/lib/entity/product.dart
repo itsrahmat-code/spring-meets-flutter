@@ -2,7 +2,9 @@
 
  // Assuming you create this file
 
-import 'Category.dart';
+
+
+import 'package:merchandise_management_system/entity/Category.dart';
 
 class Product {
   final int? id;
