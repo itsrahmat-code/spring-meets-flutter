@@ -1,15 +1,15 @@
-// File: lib/pos/product_list_page.dart
-
 import 'package:flutter/material.dart';
-import 'package:merchandise_management_system/entity/Category.dart';
-import 'package:merchandise_management_system/entity/product.dart';
+import 'package:merchandise_management_system/models/category_model.dart';
+import 'package:merchandise_management_system/models/product_model.dart';
+
 import 'package:merchandise_management_system/pages/manager_page.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
+import 'package:merchandise_management_system/pos/cart_page.dart';
 import 'package:merchandise_management_system/pos/product_detail_page.dart';
-import 'package:merchandise_management_system/service/product_service.dart'; // Assuming this points to ProductAdd
+import 'package:merchandise_management_system/service/cart_service.dart';
+import 'package:merchandise_management_system/service/product_service.dart';
 
 class ProductListPage extends StatefulWidget {
-  // FIX 1: Add the required 'profile' parameter to the constructor
   final Map<String, dynamic> profile;
 
   const ProductListPage({super.key, required this.profile});
@@ -20,20 +20,18 @@ class ProductListPage extends StatefulWidget {
 
 class _ProductListPageState extends State<ProductListPage>
     with SingleTickerProviderStateMixin {
-
   final ProductService _productService = ProductService();
+  final CartService _cartService = CartService();
+
   late Future<List<Product>> _productsFuture;
 
-  // State for search and filtering
   final TextEditingController _searchController = TextEditingController();
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
 
-  // Tab Controller for category separation
   late TabController _tabController;
   final List<Category> _categories = Category.values;
 
-  // State for the current search query
   String _currentSearchQuery = '';
 
   @override
@@ -54,7 +52,6 @@ class _ProductListPageState extends State<ProductListPage>
     super.dispose();
   }
 
-  // --- Data Fetching and Filtering Logic ---
   void _fetchProducts() {
     setState(() {
       _productsFuture = _productService.getAllProducts();
@@ -64,12 +61,9 @@ class _ProductListPageState extends State<ProductListPage>
       _allProducts = products;
       _applyFilters();
     }).catchError((error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to fetch products: $error')),
-        );
-      }
-      print('Failed to fetch products: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to fetch products: $error')),
+      );
     });
   }
 
@@ -82,23 +76,17 @@ class _ProductListPageState extends State<ProductListPage>
 
   void _applyFilters() {
     final currentCategory = _categories[_tabController.index];
-
     setState(() {
       _filteredProducts = _allProducts.where((product) {
-        // Filter by Category
         final categoryMatch = product.category == currentCategory;
-
-        // Filter by Search Query (Name or Brand)
         final searchMatch = product.name.toLowerCase().contains(_currentSearchQuery) ||
             product.brand.toLowerCase().contains(_currentSearchQuery);
-
         return categoryMatch && searchMatch;
       }).toList();
     });
   }
 
   void _navigateToDetail(Product product) async {
-    // Navigate and await result if product was updated/deleted
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -106,15 +94,12 @@ class _ProductListPageState extends State<ProductListPage>
       ),
     );
 
-    // If result indicates a change, refresh the product list
     if (result == true) {
       _fetchProducts();
     }
   }
 
-  // FIX 2: Custom Back Navigation that pushes ManagerPage
   void _navigateToManagerPage() {
-    // Use pushAndRemoveUntil to ensure ManagerPage is the root after returning.
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => ManagerPage(profile: widget.profile)),
@@ -122,22 +107,18 @@ class _ProductListPageState extends State<ProductListPage>
     );
   }
 
-  // --- UI Components ---
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      // FIX 3: Back button uses the custom navigation method
       onWillPop: () async {
         _navigateToManagerPage();
-        return false; // Prevent default system back behavior
+        return false;
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Product Stock'),
           backgroundColor: Colors.blueAccent,
           centerTitle: true,
-          // FIX 4: Explicit Back Button uses the custom navigation method
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: _navigateToManagerPage,
@@ -145,16 +126,44 @@ class _ProductListPageState extends State<ProductListPage>
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: _fetchProducts, // Refreshes the original list
+              onPressed: _fetchProducts,
+            ),
+            Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CartPage()),
+                    );
+                    setState(() {}); // Update badge count after return
+                  },
+                ),
+                if (_cartService.totalItems > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: CircleAvatar(
+                      radius: 10,
+                      backgroundColor: Colors.red,
+                      child: Text(
+                        '${_cartService.totalItems}',
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(100.0),
+            preferredSize: const Size.fromHeight(100),
             child: Column(
               children: [
-                // Search Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
@@ -178,15 +187,15 @@ class _ProductListPageState extends State<ProductListPage>
                     ),
                   ),
                 ),
-
-                // Category Tabs
                 TabBar(
                   controller: _tabController,
                   isScrollable: true,
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white70,
                   indicatorColor: Colors.white,
-                  tabs: _categories.map((c) => Tab(text: c.toString().split('.').last)).toList(),
+                  tabs: _categories
+                      .map((c) => Tab(text: c.toString().split('.').last))
+                      .toList(),
                 ),
               ],
             ),
@@ -202,11 +211,9 @@ class _ProductListPageState extends State<ProductListPage>
             } else if (!snapshot.hasData || _allProducts.isEmpty) {
               return const Center(child: Text('No products found.'));
             } else {
-              // Once data is loaded and filtered
               return TabBarView(
                 controller: _tabController,
                 children: _categories.map((category) {
-                  // Get products matching the current tab index and search query
                   final productsForTab = _allProducts.where((p) {
                     final categoryMatch = p.category == category;
                     final searchMatch = p.name.toLowerCase().contains(_currentSearchQuery) ||
@@ -221,7 +228,7 @@ class _ProductListPageState extends State<ProductListPage>
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 80.0), // Padding for FAB
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 80.0),
                     itemCount: productsForTab.length,
                     itemBuilder: (context, index) {
                       final product = productsForTab[index];
@@ -233,7 +240,8 @@ class _ProductListPageState extends State<ProductListPage>
                             backgroundColor: Colors.blueAccent,
                             child: Text(
                               product.quantity.toString(),
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.bold),
                             ),
                           ),
                           title: Text(
@@ -246,11 +254,28 @@ class _ProductListPageState extends State<ProductListPage>
                               Text('Brand: ${product.brand} | Model: ${product.model ?? 'N/A'}'),
                               Text(
                                 'Unit: \$${product.price.toStringAsFixed(2)} | Total: \$${product.totalPrice.toStringAsFixed(2)}',
-                                style: TextStyle(color: Colors.black54),
+                                style: const TextStyle(color: Colors.black54),
                               ),
                             ],
                           ),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.add_shopping_cart),
+                            onPressed: () {
+                              if (product.quantity > 0) {
+                                setState(() {
+                                  _cartService.addToCart(product);
+                                  product.quantity--;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('${product.name} added to cart')),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Out of stock')),
+                                );
+                              }
+                            },
+                          ),
                           onTap: () => _navigateToDetail(product),
                         ),
                       );
@@ -262,15 +287,15 @@ class _ProductListPageState extends State<ProductListPage>
           },
         ),
         floatingActionButton: FloatingActionButton(
-          // Navigate to Add Product Page
           onPressed: () async {
-            // FIX 5: Pass the required 'profile' to ProductAdd and remove 'const'
             final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ProductAdd(profile: widget.profile))
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProductAdd(profile: widget.profile),
+              ),
             );
             if (result == true) {
-              _fetchProducts(); // Refresh list if product was added successfully
+              _fetchProducts();
             }
           },
           child: const Icon(Icons.add),

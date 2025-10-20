@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:merchandise_management_system/entity/dashboard.dart';
+
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
 import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
-import 'package:merchandise_management_system/service/dashboardservice.dart';
+
 
 class ManagerPage extends StatefulWidget {
   final Map<String, dynamic> profile;
@@ -19,7 +19,7 @@ class ManagerPage extends StatefulWidget {
 
 class _ManagerPageState extends State<ManagerPage> {
   final AuthService _authService = AuthService();
-  final DashboardService _dashboardService = DashboardService();
+
 
   void _navigateToPage(Widget page) {
     Navigator.pop(context); // Close the drawer

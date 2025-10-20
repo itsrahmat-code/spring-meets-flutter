@@ -1,10 +1,9 @@
 package com.rahmatullahsaruk.stock_management.restcontroller;
 
+
 import com.rahmatullahsaruk.stock_management.dto.ProductDTO;
-import com.rahmatullahsaruk.stock_management.entity.Invoice;
 import com.rahmatullahsaruk.stock_management.entity.Product;
 import com.rahmatullahsaruk.stock_management.mapper.ProductMapper;
-import com.rahmatullahsaruk.stock_management.repository.InvoiceRepo;
 import com.rahmatullahsaruk.stock_management.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,24 +18,15 @@ import java.util.stream.Collectors;
 public class ProductController {
 
     private final ProductService productService;
-    private final InvoiceRepo invoiceRepo;
 
-    public ProductController(ProductService productService, InvoiceRepo invoiceRepo) {
+    public ProductController(ProductService productService) {
         this.productService = productService;
-        this.invoiceRepo = invoiceRepo;
     }
 
     // ✅ Create
     @PostMapping("/add")
     public ResponseEntity<ProductDTO> addProduct(@RequestBody ProductDTO dto) {
         Product product = ProductMapper.toEntity(dto);
-
-        // If invoiceId is present, fetch and set the Invoice
-        if (dto.getInvoiceId() != null) {
-            Optional<Invoice> invoiceOpt = invoiceRepo.findById(dto.getInvoiceId());
-            invoiceOpt.ifPresent(product::setInvoice);
-        }
-
         Product savedProduct = productService.saveProduct(product);
         return ResponseEntity.ok(ProductMapper.toDTO(savedProduct));
     }
@@ -74,12 +64,6 @@ public class ProductController {
         existing.setDetails(dto.getDetails());
         existing.setQuantity(dto.getQuantity());
         existing.setPrice(dto.getPrice());
-
-        if (dto.getInvoiceId() != null) {
-            invoiceRepo.findById(dto.getInvoiceId()).ifPresent(existing::setInvoice);
-        } else {
-            existing.setInvoice(null); // Optional: handle removing invoice
-        }
 
         Product updated = productService.saveProduct(existing);
         return ResponseEntity.ok(ProductMapper.toDTO(updated));

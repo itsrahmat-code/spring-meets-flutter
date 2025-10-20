@@ -1,9 +1,8 @@
-
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:merchandise_management_system/models/product_model.dart';
 
-import '../entity/product.dart';
+
 
 
 class ProductService {

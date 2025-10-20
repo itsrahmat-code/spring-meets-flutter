@@ -1,7 +1,6 @@
 // lib/models/invoice.dart
 
 
-
 class Invoice {
   final int? id;
   final DateTime? date;

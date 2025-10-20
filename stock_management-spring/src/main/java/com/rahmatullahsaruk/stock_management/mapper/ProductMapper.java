@@ -1,5 +1,6 @@
 package com.rahmatullahsaruk.stock_management.mapper;
 
+
 import com.rahmatullahsaruk.stock_management.dto.ProductDTO;
 import com.rahmatullahsaruk.stock_management.entity.Product;
 
@@ -19,7 +20,6 @@ public class ProductMapper {
         dto.setDetails(product.getDetails());
         dto.setQuantity(product.getQuantity());
         dto.setPrice(product.getPrice());
-        dto.setInvoiceId(product.getInvoice() != null ? product.getInvoice().getId() : null);
 
         return dto;
     }
@@ -38,7 +38,6 @@ public class ProductMapper {
         product.setDetails(dto.getDetails());
         product.setQuantity(dto.getQuantity());
         product.setPrice(dto.getPrice());
-        // Note: invoice should be set in service or another mapper to avoid circular reference
 
         return product;
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:merchandise_management_system/entity/Category.dart';
-import 'package:merchandise_management_system/entity/product.dart';
+import 'package:merchandise_management_system/models/category_model.dart';
+import 'package:merchandise_management_system/models/product_model.dart';
+
 import 'package:merchandise_management_system/pages/manager_page.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
 import 'package:merchandise_management_system/pos/cart_page.dart';

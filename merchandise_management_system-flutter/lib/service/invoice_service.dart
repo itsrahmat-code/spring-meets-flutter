@@ -2,7 +2,8 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:merchandise_management_system/entity/invoice.dart';
+import 'package:merchandise_management_system/models/invoice_model.dart';
+
 
 
 

@@ -1,10 +1,5 @@
 // File: lib/models/product_model.dart
-
- // Assuming you create this file
-
-
-
-import 'package:merchandise_management_system/entity/Category.dart';
+import 'package:merchandise_management_system/models/category_model.dart';
 
 class Product {
   final int? id;
@@ -13,7 +8,7 @@ class Product {
   final String brand;
   final String? model;
   final String? details;
-  final int quantity;
+  int quantity;
   final double price;
   final int? invoiceId;
 

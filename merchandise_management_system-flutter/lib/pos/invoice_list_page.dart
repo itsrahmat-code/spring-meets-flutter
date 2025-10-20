@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:merchandise_management_system/entity/invoice.dart';
+import 'package:merchandise_management_system/models/invoice_model.dart';
+
 import 'package:merchandise_management_system/pages/manager_page.dart';
 import 'package:merchandise_management_system/service/invoice_service.dart';
 

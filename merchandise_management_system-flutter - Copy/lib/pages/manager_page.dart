@@ -1,15 +1,13 @@
-// File: lib/pages/manager_page.dart
-
 import 'package:flutter/material.dart';
-import 'package:merchandise_management_system/entity/dashboard.dart';
+
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
+import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
-import 'package:merchandise_management_system/pos/add_product.dart'; // ProductAdd is here
-import '../service/dashboardservice.dart';
+import 'package:merchandise_management_system/pos/add_product.dart';
 
-// ManagerPage is now a StatefulWidget to handle dashboard data fetching
+
 class ManagerPage extends StatefulWidget {
   final Map<String, dynamic> profile;
 
@@ -21,24 +19,24 @@ class ManagerPage extends StatefulWidget {
 
 class _ManagerPageState extends State<ManagerPage> {
   final AuthService _authService = AuthService();
-  final DashboardService _dashboardService = DashboardService();
-  late Future<DashboardModel> _dashboardFuture;
 
-  @override
-  void initState() {
-    super.initState();
-    _dashboardFuture = _dashboardService.getDashboardData();
-  }
 
   void _navigateToPage(Widget page) {
     Navigator.pop(context); // Close the drawer
-    // The ProductAdd widget will handle navigation to ProductListPage
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
-// ... (omitted helper methods for brevity) ...
 
-  // New helper for building Action Buttons (for brevity in the main build method)
-  Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onPressed) {
+  void _showComingSoon(String featureName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$featureName feature coming soon!'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+      String label, IconData icon, Color color, VoidCallback onPressed) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5.0),
@@ -66,12 +64,13 @@ class _ManagerPageState extends State<ManagerPage> {
     final String? photoUrl =
     (photoName != null && photoName.isNotEmpty) ? "$baseUrl$photoName" : null;
 
-    final String name = widget.profile['name'] ?? 'N/A';
+    final String name = widget.profile['name'] ?? 'Manager';
     final String email = widget.profile['email'] ?? 'N/A';
+
+    const int demoSoldCount = 340; // 🔥 Fixed demo value for total sold
 
     return WillPopScope(
       onWillPop: () async {
-        // Prevent back button from leaving the page unless it's the Logout button
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please use the Logout button to exit.')),
         );
@@ -87,7 +86,6 @@ class _ManagerPageState extends State<ManagerPage> {
           centerTitle: true,
           elevation: 4,
         ),
-        // --- UPDATED DRAWER ---
         drawer: Drawer(
           child: ListView(
             padding: EdgeInsets.zero,
@@ -109,24 +107,31 @@ class _ManagerPageState extends State<ManagerPage> {
               ListTile(
                 leading: const Icon(Icons.dashboard),
                 title: const Text('Dashboard'),
-                onTap: () => Navigator.pop(context), // Close drawer and stay here
+                onTap: () => Navigator.pop(context),
               ),
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('My Profile'),
-                onTap: () => _navigateToPage(ManagerProfilePage(profile: widget.profile)),
+                onTap: () =>
+                    _navigateToPage(ManagerProfilePage(profile: widget.profile)),
               ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.add_shopping_cart),
                 title: const Text('Add Product'),
-                // FIX 3a: Pass the profile to ProductAdd
-                onTap: () => _navigateToPage(ProductAdd(profile: widget.profile)),
+                onTap: () =>
+                    _navigateToPage(ProductAdd(profile: widget.profile)),
               ),
               ListTile(
                 leading: const Icon(Icons.list_alt),
                 title: const Text('Product List'),
-                onTap: () => _navigateToPage(ProductListPage(profile: widget.profile)),
+                onTap: () =>
+                    _navigateToPage(ProductListPage(profile: widget.profile)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.receipt),
+                title: const Text('Invoice List'),
+                onTap: () => _navigateToPage(InvoiceListPage()),
               ),
               const Divider(),
               ListTile(
@@ -147,15 +152,31 @@ class _ManagerPageState extends State<ManagerPage> {
             ],
           ),
         ),
-        // --- DASHBOARD BODY ---
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-// ... (omitted FutureBuilder for dashboard content) ...
+              // 🎉 Motivational Message Block
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.deepPurple, width: 1),
+                ),
+                child: Text(
+                  "🎉 Well done, $name!\n\n"
+                      "📦 Last month, your shop sold a total of **$demoSoldCount** products.\n"
+                      "💰 We’ve made a great profit and you’ve earned a bonus for your amazing effort.\n\n"
+                      "🙌 Keep pushing boundaries and inspiring your team.\n"
+                      "Together, we will touch the sky!",
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ),
 
-              // Product Action Buttons (quick access)
+              // Product Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -163,7 +184,6 @@ class _ManagerPageState extends State<ManagerPage> {
                     "Add Product",
                     Icons.add,
                     Colors.deepPurple,
-                    // FIX 3b: Pass the profile to ProductAdd
                         () => _navigateToPage(ProductAdd(profile: widget.profile)),
                   ),
                   _buildActionButton(
@@ -171,6 +191,70 @@ class _ManagerPageState extends State<ManagerPage> {
                     Icons.list,
                     Colors.deepPurple,
                         () => _navigateToPage(ProductListPage(profile: widget.profile)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Invoice Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    "Invoice List",
+                    Icons.receipt,
+                    Colors.indigo,
+                        () => _navigateToPage(InvoiceListPage()),
+                  ),
+                  _buildActionButton(
+                    "Add Invoice",
+                    Icons.shopping_cart_checkout,
+                    Colors.teal,
+                        () => _navigateToPage(const InvoiceListPage()),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Other Features
+              const Text(
+                "Other Features",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    "Sales Report",
+                    Icons.bar_chart,
+                    Colors.orange,
+                        () => _showComingSoon("Sales Report"),
+                  ),
+                  _buildActionButton(
+                    "Low Stock",
+                    Icons.warning_amber,
+                    Colors.redAccent,
+                        () => _showComingSoon("Low Stock"),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    "Important Contact",
+                    Icons.contact_phone,
+                    Colors.blueGrey,
+                        () => _showComingSoon("Important Contact"),
+                  ),
+                  _buildActionButton(
+                    "System Info",
+                    Icons.info,
+                    Colors.grey,
+                        () => _showComingSoon("System Info"),
                   ),
                 ],
               ),

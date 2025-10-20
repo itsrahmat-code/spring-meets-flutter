@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const WelcomePage(),
         '/login': (context) => const LoginPage(),
-        '/register': (context) => const Manager(), // Registration screen
+        '/register': (context) => const Register(), // Registration screen
       },
     );
   }

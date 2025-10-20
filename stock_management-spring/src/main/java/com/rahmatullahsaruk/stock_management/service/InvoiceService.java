@@ -1,6 +1,7 @@
 package com.rahmatullahsaruk.stock_management.service;
 
 import com.rahmatullahsaruk.stock_management.entity.Invoice;
+import com.rahmatullahsaruk.stock_management.entity.InvoiceItem;
 import com.rahmatullahsaruk.stock_management.entity.Product;
 import com.rahmatullahsaruk.stock_management.repository.InvoiceRepo;
 import com.rahmatullahsaruk.stock_management.repository.ProductRepo;
@@ -25,41 +26,33 @@ public class InvoiceService {
 
     @Transactional
     public Invoice save(Invoice invoice) {
+        List<InvoiceItem> invoiceItems = new ArrayList<>();
 
-        List<Product> soldProducts = new ArrayList<>();
+        for (InvoiceItem item : invoice.getItems()) {
+            Product product = productRepo.findById(item.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProduct().getId()));
 
-        for (Product invoiceProduct : invoice.getProducts()) {
-            // Fetch stock product
-            Product stockProduct = productRepo.findById(invoiceProduct.getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + invoiceProduct.getId()));
-
-            // Deduct stock
-            int newQuantity = stockProduct.getQuantity() - invoiceProduct.getQuantity();
-            if (newQuantity < 0) {
-                throw new RuntimeException("Not enough stock for product: " + stockProduct.getName());
+            // Check stock
+            int remainingQty = product.getQuantity() - item.getQuantity();
+            if (remainingQty < 0) {
+                throw new RuntimeException("Insufficient stock for product: " + product.getName());
             }
-            stockProduct.setQuantity(newQuantity);
 
-            // Save updated stock quantity
-            productRepo.save(stockProduct);
+            product.setQuantity(remainingQty);
+            productRepo.save(product);
 
-            // Create snapshot product for invoice
-            Product sold = new Product();
-            sold.setName(stockProduct.getName());
-            sold.setCategory(stockProduct.getCategory());
-            sold.setBrand(stockProduct.getBrand());
-            sold.setModel(stockProduct.getModel());
-            sold.setDetails(stockProduct.getDetails());
-            sold.setPrice(stockProduct.getPrice());
-            sold.setQuantity(invoiceProduct.getQuantity()); // sold qty
-            sold.setInvoice(invoice);
+            // Create InvoiceItem
+            InvoiceItem invoiceItem = new InvoiceItem();
+            invoiceItem.setInvoice(invoice);
+            invoiceItem.setProduct(product);
+            invoiceItem.setQuantity(item.getQuantity());
+            invoiceItem.setPriceAtSale(product.getPrice());
 
-            soldProducts.add(sold);
+            invoiceItems.add(invoiceItem);
         }
 
-        invoice.setProducts(soldProducts);
+        invoice.setItems(invoiceItems);
 
-        // Set defaults if not provided
         if (invoice.getDate() == null) {
             invoice.setDate(LocalDateTime.now());
         }
@@ -71,6 +64,7 @@ public class InvoiceService {
 
         return invoiceRepo.save(invoice);
     }
+
 
     public List<Invoice> getAll() {
         return invoiceRepo.findAll();

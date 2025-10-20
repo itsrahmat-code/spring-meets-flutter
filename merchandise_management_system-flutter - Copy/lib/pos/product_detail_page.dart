@@ -1,7 +1,7 @@
 // File: lib/pos/product_detail_page.dart
-
 import 'package:flutter/material.dart';
-import 'package:merchandise_management_system/entity/product.dart';
+import 'package:merchandise_management_system/models/product_model.dart';
+
 
 
 class ProductDetailPage extends StatefulWidget {

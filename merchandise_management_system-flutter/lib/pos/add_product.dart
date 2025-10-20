@@ -1,11 +1,12 @@
 // File: lib/pos/product_add_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:merchandise_management_system/entity/Category.dart';
-import 'package:merchandise_management_system/entity/product.dart';
+import 'package:merchandise_management_system/models/category_model.dart';
 import 'package:merchandise_management_system/pages/manager_page.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/service/product_service.dart';
+
+import '../models/product_model.dart';
 
 class ProductAdd extends StatefulWidget {
   final Map<String, dynamic> profile;

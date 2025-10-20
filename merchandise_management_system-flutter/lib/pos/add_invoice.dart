@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:merchandise_management_system/entity/invoice.dart';
+import 'package:merchandise_management_system/models/invoice_model.dart';
+import 'package:merchandise_management_system/models/product_model.dart';
 import 'package:merchandise_management_system/service/invoice_service.dart';
 
 class InvoiceAddPage extends StatefulWidget {
@@ -19,16 +20,16 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _invoiceNumberController = TextEditingController();
-  final TextEditingController _discountController = TextEditingController(text: '0.0');
-  final TextEditingController _taxRateController = TextEditingController(text: '5.0');
-  final TextEditingController _paidController = TextEditingController(text: '0.0');
+  final TextEditingController _invoiceNumberController =
+  TextEditingController();
+  final TextEditingController _discountController =
+  TextEditingController(text: '0.0');
+  final TextEditingController _taxRateController =
+  TextEditingController(text: '5.0');
+  final TextEditingController _paidController =
+  TextEditingController(text: '0.0');
 
-  // You can remove these if you don't want product editing here.
-  final TextEditingController _productNameController = TextEditingController();
-  final TextEditingController _productPriceController = TextEditingController();
-  final TextEditingController _productQuantityController = TextEditingController();
-
+  List<Product> _productsFromCart = [];
   bool _isLoading = false;
 
   @override
@@ -36,12 +37,13 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
     super.initState();
 
     if (widget.cartItems.isNotEmpty) {
-      final firstProduct = widget.cartItems.keys.first;
-      final qty = widget.cartItems[firstProduct]!;
-
-      _productNameController.text = firstProduct.name;
-      _productPriceController.text = firstProduct.price.toStringAsFixed(2);
-      _productQuantityController.text = qty.toString();
+      _productsFromCart = widget.cartItems.entries.map((entry) {
+        return Product(
+          name: entry.key.name,
+          price: entry.key.price,
+          quantity: entry.value,
+        );
+      }).toList();
     }
   }
 
@@ -50,12 +52,6 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
       setState(() {
         _isLoading = true;
       });
-
-      final newProduct = Product(
-        name: _productNameController.text,
-        price: double.tryParse(_productPriceController.text) ?? 0.0,
-        quantity: int.tryParse(_productQuantityController.text) ?? 0,
-      );
 
       final newInvoice = Invoice(
         date: DateTime.now(),
@@ -70,7 +66,7 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
         subtotal: 0.0,
         taxAmount: 0.0,
         total: 0.0,
-        products: [newProduct],
+        products: _productsFromCart,
       );
 
       try {
@@ -78,7 +74,9 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Invoice ${createdInvoice.invoiceNumber} created successfully! ID: ${createdInvoice.id}')),
+            SnackBar(
+                content: Text(
+                    'Invoice ${createdInvoice.invoiceNumber} created successfully! ID: ${createdInvoice.id}')),
           );
           Navigator.of(context).pop(true);
         }
@@ -108,9 +106,6 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
     _discountController.dispose();
     _taxRateController.dispose();
     _paidController.dispose();
-    _productNameController.dispose();
-    _productPriceController.dispose();
-    _productQuantityController.dispose();
     super.dispose();
   }
 
@@ -133,28 +128,46 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: <Widget>[
-            const Text('Customer Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            _buildTextFormField(_nameController, 'Customer Name', (value) => value!.isEmpty ? 'Name is required' : null),
+            const Text('Customer Information',
+                style:
+                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            _buildTextFormField(_nameController, 'Customer Name',
+                    (value) => value!.isEmpty ? 'Name is required' : null),
             _buildTextFormField(_emailController, 'Email', null),
             _buildTextFormField(_phoneController, 'Phone', null),
             _buildTextFormField(_addressController, 'Address', null),
             const Divider(height: 30),
-            const Text('Invoice Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            _buildTextFormField(_invoiceNumberController, 'Invoice Number', (value) => value!.isEmpty ? 'Invoice Number is required' : null),
-            _buildTextFormField(_discountController, 'Discount Amount', null, isDouble: true),
-            _buildTextFormField(_taxRateController, 'Tax Rate (%)', null, isDouble: true),
-            _buildTextFormField(_paidController, 'Amount Paid', null, isDouble: true),
+            const Text('Invoice Details',
+                style:
+                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            _buildTextFormField(
+                _invoiceNumberController,
+                'Invoice Number',
+                    (value) =>
+                value!.isEmpty ? 'Invoice Number is required' : null),
+            _buildTextFormField(_discountController, 'Discount Amount',
+                null, isDouble: true),
+            _buildTextFormField(
+                _taxRateController, 'Tax Rate (%)', null,
+                isDouble: true),
+            _buildTextFormField(_paidController, 'Amount Paid', null,
+                isDouble: true),
             const Divider(height: 30),
-            const Text('Product Entry (One Product Only)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            _buildTextFormField(_productNameController, 'Product Name', (value) => value!.isEmpty ? 'Product Name is required' : null),
-            _buildTextFormField(_productPriceController, 'Price', (value) => value!.isEmpty ? 'Price is required' : null, isDouble: true),
-            _buildTextFormField(_productQuantityController, 'Quantity', (value) => value!.isEmpty ? 'Quantity is required' : null, isInteger: true),
+            const Text('Products from Cart:',
+                style:
+                TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ..._productsFromCart.map((p) => ListTile(
+              title: Text(p.name),
+              subtitle: Text(
+                  "Price: \$${p.price.toStringAsFixed(2)} x ${p.quantity}"),
+            )),
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: const Padding(
                 padding: EdgeInsets.all(12.0),
-                child: Text('Save Invoice', style: TextStyle(fontSize: 16)),
+                child: Text('Save Invoice',
+                    style: TextStyle(fontSize: 16)),
               ),
             ),
           ],
@@ -163,16 +176,15 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
     );
   }
 
-  Widget _buildTextFormField(
-      TextEditingController controller,
-      String labelText,
-      String? Function(String?)? validator, {
-        bool isDouble = false,
-        bool isInteger = false,
-      }) {
+  Widget _buildTextFormField(TextEditingController controller, String labelText,
+      String? Function(String?)? validator,
+      {bool isDouble = false, bool isInteger = false}) {
     TextInputType keyboardType = TextInputType.text;
-    if (isDouble) keyboardType = const TextInputType.numberWithOptions(decimal: true);
-    if (isInteger) keyboardType = TextInputType.number;
+    if (isDouble) {
+      keyboardType = const TextInputType.numberWithOptions(decimal: true);
+    } else if (isInteger) {
+      keyboardType = TextInputType.number;
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -187,7 +199,8 @@ class _CreateInvoicePageState extends State<InvoiceAddPage> {
                 (value) {
               if (isDouble || isInteger) {
                 if (value == null || value.isEmpty) return null;
-                final val = isDouble ? double.tryParse(value) : int.tryParse(value);
+                final val =
+                isDouble ? double.tryParse(value) : int.tryParse(value);
                 return val == null ? 'Invalid number format' : null;
               }
               return null;

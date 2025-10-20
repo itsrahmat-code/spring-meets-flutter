@@ -1,5 +1,6 @@
 package com.rahmatullahsaruk.stock_management.dto;
 
+
 import com.rahmatullahsaruk.stock_management.entity.Product;
 
 public class ProductDTO {
@@ -12,12 +13,11 @@ public class ProductDTO {
     private String details;
     private int quantity;
     private double price;
-    private Long invoiceId;
 
     public ProductDTO() {}
 
     public ProductDTO(Long id, String name, Product.Category category, String brand, String model, String details,
-                      int quantity, double price, Long invoiceId) {
+                      int quantity, double price) {
         this.id = id;
         this.name = name;
         this.category = category;
@@ -26,7 +26,6 @@ public class ProductDTO {
         this.details = details;
         this.quantity = quantity;
         this.price = price;
-        this.invoiceId = invoiceId;
     }
 
     // --- Getters and Setters ---
@@ -53,9 +52,6 @@ public class ProductDTO {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
-
-    public Long getInvoiceId() { return invoiceId; }
-    public void setInvoiceId(Long invoiceId) { this.invoiceId = invoiceId; }
 
     // --- Utility ---
     public double getTotalPrice() {
