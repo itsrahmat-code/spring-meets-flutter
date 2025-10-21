@@ -1,6 +1,5 @@
 package com.rahmatullahsaruk.stock_management.mapper;
 
-
 import com.rahmatullahsaruk.stock_management.dto.ProductDTO;
 import com.rahmatullahsaruk.stock_management.entity.Product;
 

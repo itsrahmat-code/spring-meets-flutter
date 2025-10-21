@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:merchandise_management_system/models/invoice_model.dart';
-import 'package:merchandise_management_system/models/product_model.dart';
+import 'package:merchandise_management_system/models/product_model.dart' hide Product;
 import 'package:merchandise_management_system/service/invoice_service.dart';
 
 class InvoiceAddPage extends StatefulWidget {

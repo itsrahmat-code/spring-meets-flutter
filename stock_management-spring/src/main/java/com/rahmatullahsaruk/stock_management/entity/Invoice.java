@@ -4,6 +4,7 @@ package com.rahmatullahsaruk.stock_management.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,7 +26,9 @@ public class Invoice {
     private String invoiceNumber;
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InvoiceItem> items;
+
+    private List<InvoiceItem> items = new ArrayList<>();
+
 
     public Invoice() {}
 

@@ -131,6 +131,30 @@ public class InvoiceController {
 
 
 
+//    {
+//        "name": "John Doe",
+//            "email": "john@example.com",
+//            "phone": "1234567890",
+//            "discount": 50,
+//            "paid": 950,
+//            "items": [
+//        {
+//            "product": {
+//            "id": 1
+//        },
+//            "quantity": 2,
+//                "priceAtSale": 500
+//        },
+//        {
+//            "product": {
+//            "id": 2
+//        },
+//            "quantity": 1,
+//                "priceAtSale": 300
+//        }
+//
+//  ]
+//    }
 
 
 
