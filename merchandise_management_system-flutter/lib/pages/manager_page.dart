@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
+import 'package:merchandise_management_system/pos/add_product.dart';
 import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
-import 'package:merchandise_management_system/pos/add_product.dart';
+
 
 
 class ManagerPage extends StatefulWidget {

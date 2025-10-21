@@ -19,7 +19,6 @@ public class Product {
 
     @Column(nullable = false)
     private String brand;
-
     private String model;
     private String details;
 
