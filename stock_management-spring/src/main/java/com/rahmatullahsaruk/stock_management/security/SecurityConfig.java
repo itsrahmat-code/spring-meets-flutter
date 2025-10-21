@@ -1,6 +1,8 @@
 package com.rahmatullahsaruk.stock_management.security;
 
 import com.rahmatullahsaruk.stock_management.jwt.JwtAuthFilter;
+
+
 import com.rahmatullahsaruk.stock_management.jwt.JwtService;
 import com.rahmatullahsaruk.stock_management.service.UserService;
 import org.springframework.context.annotation.Bean;
@@ -21,10 +23,11 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
@@ -35,7 +38,40 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(req -> req
-                        .anyRequest().permitAll()  // Allow all requests without authentication
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/logout",
+                                "/api/auth/active/**",
+                                "/api/auth/all",
+                                "/api/admin/**",
+                                "/api/cashier/**",
+                                "/api/category/**",
+                                "/api/customer/**",
+                                "/api/employee/**",
+                                "/api/brand/**",
+                                "/api/goods/**",
+                                "/api/invoices/**",
+                                "/api/invoiceitem/**",
+                                "/api/expense/**",
+                                "/api/returnproduct/**",
+                                "/api/resellproduct/**",
+                                "/api/replaceUnit/**",
+                                "/api/cogs/**",
+                                "/api/duelist/**",
+                                "/api/manager/**",
+                                "/api/manager/profile/**",
+                                "/api/manager/reg/**",
+                                "/api/cashier/reg/**",
+                                "/api/cashier/profile/**",
+                                "/api/product/**",
+                                "/api/supplier/**",
+                                "/images/**"
+                        ).permitAll()
+
+//                        .authorizeHttpRequests(req -> req
+//                                .anyRequest().permitAll() // Allow ALL endpoints without authentication
+//                        )
+
                 )
                 .userDetailsService(userService)
                 .sessionManagement(session ->
@@ -44,6 +80,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
     @Bean
     public JwtAuthFilter jwtAuthFilter(JwtService jwtService, UserService userService) {
