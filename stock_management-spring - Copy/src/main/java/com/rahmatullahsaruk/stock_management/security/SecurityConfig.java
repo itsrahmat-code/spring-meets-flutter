@@ -1,6 +1,8 @@
 package com.rahmatullahsaruk.stock_management.security;
 
 import com.rahmatullahsaruk.stock_management.jwt.JwtAuthFilter;
+
+
 import com.rahmatullahsaruk.stock_management.jwt.JwtService;
 import com.rahmatullahsaruk.stock_management.service.UserService;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +51,7 @@ public class SecurityConfig {
                                 "/api/brand/**",
                                 "/api/goods/**",
                                 "/api/invoices/**",
+                                "/api/invoiceitem/**",
                                 "/api/expense/**",
                                 "/api/returnproduct/**",
                                 "/api/resellproduct/**",
@@ -65,6 +68,9 @@ public class SecurityConfig {
                                 "/images/**"
                         ).permitAll()
 
+//                        .authorizeHttpRequests(req -> req
+//                                .anyRequest().permitAll() // Allow ALL endpoints without authentication
+//                        )
 
                 )
                 .userDetailsService(userService)

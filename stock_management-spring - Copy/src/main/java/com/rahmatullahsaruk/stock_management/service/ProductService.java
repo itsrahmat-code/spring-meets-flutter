@@ -1,5 +1,6 @@
 package com.rahmatullahsaruk.stock_management.service;
 
+
 import com.rahmatullahsaruk.stock_management.dto.ProductDTO;
 import com.rahmatullahsaruk.stock_management.entity.Product;
 import com.rahmatullahsaruk.stock_management.mapper.ProductMapper;
@@ -39,7 +40,6 @@ public class ProductService {
         productRepo.deleteById(id);
     }
 
-    // Convert all entities to DTOs
     public List<ProductDTO> getAllProductDTOs() {
         return productRepo.findAll().stream()
                 .map(ProductMapper::toDTO)

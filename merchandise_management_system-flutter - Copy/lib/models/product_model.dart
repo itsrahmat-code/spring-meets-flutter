@@ -1,5 +1,15 @@
-// File: lib/models/product_model.dart
-import 'package:merchandise_management_system/models/category_model.dart';
+enum Category { Laptop, Accessory }
+
+extension CategoryExt on Category {
+  String get name => toString().split('.').last;
+}
+
+Category categoryFromString(String s) {
+  return Category.values.firstWhere(
+        (e) => e.name.toLowerCase() == s.toLowerCase(),
+    orElse: () => Category.Laptop,
+  );
+}
 
 class Product {
   final int? id;
@@ -8,11 +18,10 @@ class Product {
   final String brand;
   final String? model;
   final String? details;
-  int quantity;
+  final int quantity; // backend stock (immutable)
   final double price;
-  final int? invoiceId;
 
-  Product({
+  const Product({
     this.id,
     required this.name,
     required this.category,
@@ -21,42 +30,55 @@ class Product {
     this.details,
     required this.quantity,
     required this.price,
-    this.invoiceId,
   });
 
-  // Factory constructor for creating a new ProductModel object from a JSON map (for reading from API)
-  factory Product.fromJson(Map<String, dynamic> json) {
+  double get totalPrice => price * quantity;
+
+  Product copyWith({
+    int? id,
+    String? name,
+    Category? category,
+    String? brand,
+    String? model,
+    String? details,
+    int? quantity,
+    double? price,
+  }) {
     return Product(
-      id: json['id'],
-      name: json['name'],
-      // Convert String to Category enum
-      category: stringToCategory(json['category']),
-      brand: json['brand'],
-      model: json['model'],
-      details: json['details'],
-      quantity: json['quantity'],
-      price: json['price'],
-      invoiceId: json['invoiceId'],
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      brand: brand ?? this.brand,
+      model: model ?? this.model,
+      details: details ?? this.details,
+      quantity: quantity ?? this.quantity,
+      price: price ?? this.price,
     );
   }
 
-  // Method for converting a ProductModel object to a JSON map (for writing to API)
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: (json['id'] as num?)?.toInt(),
+      name: json['name'] as String,
+      category: categoryFromString(json['category'] as String),
+      brand: json['brand'] as String,
+      model: json['model'] as String?,
+      details: json['details'] as String?,
+      quantity: (json['quantity'] as num).toInt(),
+      price: (json['price'] as num).toDouble(),
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      // 'id' is typically omitted for POST requests, but included for PUT
       if (id != null) 'id': id,
       'name': name,
-      // Convert Category enum to String
-      'category': categoryToString(category),
+      'category': category.name,
       'brand': brand,
       'model': model,
       'details': details,
       'quantity': quantity,
       'price': price,
-      'invoiceId': invoiceId,
     };
   }
-
-  // Utility method from ProductDTO
-  double get totalPrice => price * quantity;
 }

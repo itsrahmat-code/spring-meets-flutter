@@ -1,146 +1,142 @@
-// File: lib/pos/product_detail_page.dart
 import 'package:flutter/material.dart';
 import 'package:merchandise_management_system/models/product_model.dart';
-
-
+import 'package:merchandise_management_system/pos/add_product.dart';
+import 'package:merchandise_management_system/service/product_service.dart';
 
 class ProductDetailPage extends StatefulWidget {
-  final Product product;
+  final int productId;
+  final Map<String, dynamic>? profile;
 
-  const ProductDetailPage({super.key, required this.product});
+  const ProductDetailPage({super.key, required this.productId, this.profile});
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
-  // We'll use this state to potentially hold updated product data 
-  // if you implement an edit form later. For now, it just displays.
-  late Product _currentProduct;
+  final ProductService _productService = ProductService();
+  late Future<Product> _productFuture;
 
   @override
   void initState() {
     super.initState();
-    _currentProduct = widget.product;
+    _productFuture = _productService.getProductById(widget.productId);
   }
 
-  // Helper method to build a detail row
-  Widget _buildDetailRow(String label, String value, {bool isHighlight = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: isHighlight ? FontWeight.bold : FontWeight.w500,
-                color: isHighlight ? Colors.deepPurple : Colors.grey[700],
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
-                color: isHighlight ? Colors.deepPurple : Colors.black,
-              ),
-            ),
+  void _refreshProduct() {
+    setState(() {
+      _productFuture = _productService.getProductById(widget.productId);
+    });
+  }
+
+  Future<void> _deleteProduct() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: const Text('Are you sure you want to delete this product?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
-  }
 
-  // Placeholder for the Edit functionality (to be implemented later)
-  void _startEditMode() {
-    // TODO: Implement navigation to an editable form, or show a dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit feature coming soon!')),
-    );
+    if (confirmed == true) {
+      try {
+        await _productService.deleteProduct(widget.productId);
+        if (context.mounted) Navigator.pop(context, true);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete product: $e')),
+          );
+        }
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentProduct.name),
-        backgroundColor: Colors.blueAccent,
+        title: const Text('Product Details'),
         actions: [
+          FutureBuilder<Product>(
+            future: _productFuture,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductAdd(
+                          productToEdit: snapshot.data!,
+                          profile: widget.profile ?? const {}, // safe default
+                        ),
+                      ),
+                    );
+                    _refreshProduct();
+                  },
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _startEditMode,
-            tooltip: 'Edit Product',
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: _deleteProduct,
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // --- Title/Header ---
-                Text(
-                  _currentProduct.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueAccent,
-                  ),
-                ),
-                const Divider(height: 20, thickness: 2),
-
-                // --- Key Stock/Pricing Details ---
-                _buildDetailRow('Product ID', _currentProduct.id?.toString() ?? 'N/A', isHighlight: true),
-                _buildDetailRow('Quantity in Stock', _currentProduct.quantity.toString(), isHighlight: true),
-                _buildDetailRow('Unit Price', '\$${_currentProduct.price.toStringAsFixed(2)}', isHighlight: true),
-                _buildDetailRow('Total Stock Value', '\$${_currentProduct.totalPrice.toStringAsFixed(2)}', isHighlight: true),
-
-                const Divider(height: 20),
-
-                // --- Classification Details ---
-                _buildDetailRow('Brand', _currentProduct.brand),
-                _buildDetailRow('Category', _currentProduct.category.toString().split('.').last),
-                _buildDetailRow('Model', _currentProduct.model ?? 'N/A'),
-
-                const Divider(height: 20),
-
-                // --- Invoice & Other Details ---
-                _buildDetailRow('Invoice ID', _currentProduct.invoiceId?.toString() ?? 'N/A'),
-
-                const SizedBox(height: 10),
-                const Text(
-                  'Details/Description:',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                ),
-                const SizedBox(height: 5),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _currentProduct.details ?? 'No additional details provided.',
-                    style: const TextStyle(fontSize: 15),
-                  ),
-                ),
-                const SizedBox(height: 20),
+      body: FutureBuilder<Product>(
+        future: _productFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData) {
+            return const Center(child: Text('Product not found.'));
+          } else {
+            final product = snapshot.data!;
+            return ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: <Widget>[
+                _buildDetailRow('ID', product.id.toString()),
+                _buildDetailRow('Name', product.name),
+                // 🔧 Use .name instead of toShortString()
+                _buildDetailRow('Category', product.category.name),
+                _buildDetailRow('Brand', product.brand),
+                _buildDetailRow('Model', product.model ?? 'N/A'),
+                _buildDetailRow('Quantity', product.quantity.toString()),
+                _buildDetailRow('Price', '৳${product.price.toStringAsFixed(2)}'),
+                _buildDetailRow('Total Value', '৳${product.totalPrice.toStringAsFixed(2)}'),
+                _buildDetailRow('Details', product.details ?? 'No details provided'),
               ],
-            ),
-          ),
-        ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(fontSize: 16)),
+          const Divider(),
+        ],
       ),
     );
   }

@@ -1,6 +1,10 @@
 package com.rahmatullahsaruk.stock_management.entity;
+
+
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -12,94 +16,60 @@ public class Invoice {
     private Long id;
 
     private LocalDateTime date;
-
     private String name;
     private String email;
     private String phone;
-    private double subtotal;   // Sum of (product price * quantity)
-    private double discount;   // Applied discount (if any)
-    private double total;      // Final total (subtotal - discount + tax)
+    private double subtotal;
+    private double discount;
+    private double total;
     private double paid;
     private String invoiceNumber;
 
-    @OneToMany(mappedBy = "invoice", orphanRemoval = true)
-    private List<Product> products ;
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
 
-    public Invoice() {
-    }
+    private List<InvoiceItem> items = new ArrayList<>();
 
-    public Invoice(Long id, LocalDateTime date, String name, String email, String phone, double subtotal, double discount, double total, double paid,  String invoiceNumber, List<Product> products) {
-        this.id = id;
-        this.date = date;
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
-        this.subtotal = subtotal;
-        this.discount = discount;
-        this.total = total;
-        this.paid = paid;
 
-        this.invoiceNumber = invoiceNumber;
-        this.products = products;
-    }
-
-    // --- Getters and Setters ---
+    public Invoice() {}
 
     public Long getId() { return id; }
-
     public void setId(Long id) { this.id = id; }
 
     public LocalDateTime getDate() { return date; }
-
     public void setDate(LocalDateTime date) { this.date = date; }
 
     public String getName() { return name; }
-
     public void setName(String name) { this.name = name; }
 
     public String getEmail() { return email; }
-
     public void setEmail(String email) { this.email = email; }
 
     public String getPhone() { return phone; }
-
     public void setPhone(String phone) { this.phone = phone; }
 
-
     public double getSubtotal() { return subtotal; }
-
     public void setSubtotal(double subtotal) { this.subtotal = subtotal; }
 
     public double getDiscount() { return discount; }
-
     public void setDiscount(double discount) { this.discount = discount; }
 
-
     public double getTotal() { return total; }
-
     public void setTotal(double total) { this.total = total; }
 
     public double getPaid() { return paid; }
-
     public void setPaid(double paid) { this.paid = paid; }
 
-
-
     public String getInvoiceNumber() { return invoiceNumber; }
-
     public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
 
-    public List<Product> getProducts() { return products; }
+    public List<InvoiceItem> getItems() { return items; }
+    public void setItems(List<InvoiceItem> items) { this.items = items; }
 
-    public void setProducts(List<Product> products) { this.products = products; }
-
-    // Automatically calculate subtotal, tax, total and due
+    // 🔁 Updated total calculator using InvoiceItem
     public void calculateTotals() {
-        this.subtotal = products.stream()
-                .mapToDouble(p -> p.getPrice() * p.getQuantity())
+        this.subtotal = items.stream()
+                .mapToDouble(i -> i.getPriceAtSale() * i.getQuantity())
                 .sum();
-
-        this.total = subtotal - discount ;
-
+        this.total = subtotal - discount;
     }
 }
