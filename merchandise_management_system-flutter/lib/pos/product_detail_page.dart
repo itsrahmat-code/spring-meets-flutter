@@ -1,142 +1,161 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'package:merchandise_management_system/models/product_model.dart';
-import 'package:merchandise_management_system/pos/add_product.dart';
-import 'package:merchandise_management_system/service/product_service.dart';
+import 'package:merchandise_management_system/service/cart_service.dart';
 
-class ProductDetailPage extends StatefulWidget {
-  final int productId;
-  final Map<String, dynamic>? profile;
+class ProductDetailPage extends StatelessWidget {
+  final Product product;
+  final Map<String, dynamic> profile;
 
-  const ProductDetailPage({super.key, required this.productId, this.profile});
-
-  @override
-  State<ProductDetailPage> createState() => _ProductDetailPageState();
-}
-
-class _ProductDetailPageState extends State<ProductDetailPage> {
-  final ProductService _productService = ProductService();
-  late Future<Product> _productFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _productFuture = _productService.getProductById(widget.productId);
-  }
-
-  void _refreshProduct() {
-    setState(() {
-      _productFuture = _productService.getProductById(widget.productId);
-    });
-  }
-
-  Future<void> _deleteProduct() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: const Text('Are you sure you want to delete this product?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await _productService.deleteProduct(widget.productId);
-        if (context.mounted) Navigator.pop(context, true);
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete product: $e')),
-          );
-        }
-      }
-    }
-  }
+  const ProductDetailPage({
+    super.key,
+    required this.product,
+    required this.profile,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final cart = context.watch<CartService>();
+    final available = cart.availableStock(product);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Product Details'),
-        actions: [
-          FutureBuilder<Product>(
-            future: _productFuture,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ProductAdd(
-                          productToEdit: snapshot.data!,
-                          profile: widget.profile ?? const {}, // safe default
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Hero-ish header card
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Center(
+                      child: Text(
+                        product.category.name.substring(0, 1),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
-                    );
-                    _refreshProduct();
-                  },
-                );
-              }
-              return const SizedBox.shrink();
-            },
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(product.name,
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 4),
+                        Text('${product.brand} ${product.model ?? ''}'.trim(),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            )),
+                      ],
+                    ),
+                  ),
+                  Chip(
+                    label: Text(product.category.name),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: _deleteProduct,
+          const SizedBox(height: 12),
+          _kv(context, 'ID', '${product.id ?? '-'}'),
+          _kv(context, 'Category', product.category.name),
+          _kv(context, 'Brand', product.brand),
+          _kv(context, 'Model', product.model ?? 'N/A'),
+          _kv(context, 'Stock (available / total)', '$available / ${product.quantity}'),
+          _kv(context, 'Unit Price', '৳ ${product.price.toStringAsFixed(2)}'),
+          const SizedBox(height: 8),
+          _sectionTitle(context, 'Details'),
+          Text(
+            product.details?.trim().isEmpty ?? true
+                ? 'No details provided'
+                : product.details!,
+            style: const TextStyle(fontSize: 15),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.add_shopping_cart),
+                  label: const Text('Add to Cart'),
+                  onPressed: !cart.canAdd(product)
+                      ? null
+                      : () {
+                    context.read<CartService>().add(product);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${product.name} added to cart')),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
-      ),
-      body: FutureBuilder<Product>(
-        future: _productFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData) {
-            return const Center(child: Text('Product not found.'));
-          } else {
-            final product = snapshot.data!;
-            return ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: <Widget>[
-                _buildDetailRow('ID', product.id.toString()),
-                _buildDetailRow('Name', product.name),
-                // 🔧 Use .name instead of toShortString()
-                _buildDetailRow('Category', product.category.name),
-                _buildDetailRow('Brand', product.brand),
-                _buildDetailRow('Model', product.model ?? 'N/A'),
-                _buildDetailRow('Quantity', product.quantity.toString()),
-                _buildDetailRow('Price', '৳${product.price.toStringAsFixed(2)}'),
-                _buildDetailRow('Total Value', '৳${product.totalPrice.toStringAsFixed(2)}'),
-                _buildDetailRow('Details', product.details ?? 'No details provided'),
-              ],
-            );
-          }
-        },
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _kv(BuildContext context, String k, String v) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 16)),
-          const Divider(),
+          SizedBox(
+            width: 180,
+            child: Text(
+              k,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              v,
+              style: const TextStyle(fontSize: 15.5),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(BuildContext context, String t) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 6),
+      child: Text(
+        t,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
       ),
     );
   }

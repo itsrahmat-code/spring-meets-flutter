@@ -1,119 +1,70 @@
-// lib/models/invoice.dart
+// Matches your Spring Boot InvoiceDTO & InvoiceItemDTO shapes
 
+class InvoiceItem {
+  final int? productId;
+  final String productName;
+  final int quantity;
+  final double priceAtSale;
+
+  const InvoiceItem({
+    this.productId,
+    required this.productName,
+    required this.quantity,
+    required this.priceAtSale,
+  });
+
+  factory InvoiceItem.fromJson(Map<String, dynamic> json) => InvoiceItem(
+    productId: (json['productId'] as num?)?.toInt(),
+    productName: json['productName'] as String,
+    quantity: (json['quantity'] as num).toInt(),
+    priceAtSale: (json['priceAtSale'] as num).toDouble(),
+  );
+}
 
 class Invoice {
   final int? id;
   final DateTime? date;
-  final String name;
-  final String email;
-  final String phone;
-  final String address;
-
+  final String invoiceNumber;
+  final String name; // customer name
+  final String? email;
+  final String? phone;
   final double subtotal;
   final double discount;
-  final double taxRate;
-  final double taxAmount;
   final double total;
   final double paid;
+  final List<InvoiceItem> items;
 
-  final String invoiceNumber;
-  final List<Product> products;
-
-  Invoice({
+  const Invoice({
     this.id,
     this.date,
+    required this.invoiceNumber,
     required this.name,
-    required this.email,
-    required this.phone,
-    required this.address,
+    this.email,
+    this.phone,
     required this.subtotal,
     required this.discount,
-    required this.taxRate,
-    required this.taxAmount,
     required this.total,
     required this.paid,
-    required this.invoiceNumber,
-    required this.products,
+    required this.items,
   });
 
-  // Factory constructor to create an Invoice from JSON (API response)
+  double get due => (total - paid);
+  bool get isPaid => paid >= total;
+
   factory Invoice.fromJson(Map<String, dynamic> json) {
+    final itemsJson = (json['items'] as List<dynamic>? ?? []);
     return Invoice(
-      id: json['id'],
-      date: json['date'] != null ? DateTime.parse(json['date']) : null,
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      address: json['address'] ?? '',
-      subtotal: json['subtotal']?.toDouble() ?? 0.0,
-      discount: json['discount']?.toDouble() ?? 0.0,
-      taxRate: json['taxRate']?.toDouble() ?? 0.0,
-      taxAmount: json['taxAmount']?.toDouble() ?? 0.0,
-      total: json['total']?.toDouble() ?? 0.0,
-      paid: json['paid']?.toDouble() ?? 0.0,
-      invoiceNumber: json['invoiceNumber'] ?? '',
-      // Map the list of product JSON objects to Product models
-      products: (json['products'] as List<dynamic>?)
-          ?.map((p) => Product.fromJson(p))
-          .toList() ??
-          [],
+      id: (json['id'] as num?)?.toInt(),
+      date: json['date'] == null ? null : DateTime.tryParse(json['date'] as String),
+      invoiceNumber: (json['invoiceNumber'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      email: json['email'] as String?,
+      phone: json['phone'] as String?,
+      subtotal: (json['subtotal'] as num).toDouble(),
+      discount: (json['discount'] as num).toDouble(),
+      total: (json['total'] as num).toDouble(),
+      paid: (json['paid'] as num).toDouble(),
+      items: itemsJson.map((e) => InvoiceItem.fromJson(e as Map<String, dynamic>)).toList(),
     );
-  }
-
-  // Method to convert an Invoice object to JSON (for POST/PUT requests)
-  Map<String, dynamic> toJson() {
-    return {
-      // 'id' is often omitted for creation (POST) but included for update (PUT)
-      'id': id,
-      'date': date?.toIso8601String(),
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'address': address,
-      // Note: subtotal, taxAmount, total might be auto-calculated by the API
-      // but they are included here for completeness/update.
-      'subtotal': subtotal,
-      'discount': discount,
-      'taxRate': taxRate,
-      'taxAmount': taxAmount,
-      'total': total,
-      'paid': paid,
-      'invoiceNumber': invoiceNumber,
-      'products': products.map((p) => p.toJson()).toList(),
-    };
-  }
-}
-
-// You need this Product model too, based on your Product entity.
-// For simplicity, a basic structure is provided here:
-class Product {
-  final int? id;
-  final String name;
-  final double price;
-  final int quantity;
-
-  Product({
-    this.id,
-    required this.name,
-    required this.price,
-    required this.quantity,
-  });
-
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['id'],
-      name: json['name'] ?? '',
-      price: json['price']?.toDouble() ?? 0.0,
-      quantity: json['quantity'] ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'price': price,
-      'quantity': quantity,
-    };
   }
 }

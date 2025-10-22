@@ -3,6 +3,7 @@ import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
+import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
 
 class ManagerPage extends StatefulWidget {
@@ -28,7 +29,11 @@ class _ManagerPageState extends State<ManagerPage> {
   }
 
   Widget _buildActionButton(
-      String label, IconData icon, Color color, VoidCallback onPressed) {
+      String label,
+      IconData icon,
+      Color color,
+      VoidCallback onPressed,
+      ) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5.0),
@@ -40,7 +45,9 @@ class _ManagerPageState extends State<ManagerPage> {
             backgroundColor: color,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
       ),
@@ -109,9 +116,9 @@ class _ManagerPageState extends State<ManagerPage> {
                 onTap: () => _navigateToPage(ProductListPage(profile: widget.profile)),
               ),
               ListTile(
-                leading: const Icon(Icons.receipt),
+                leading: const Icon(Icons.receipt_long),
                 title: const Text('Invoice List'),
-                onTap: () => _showComingSoon("Invoice List"),
+                onTap: () => _navigateToPage(InvoiceListPage(profile: widget.profile)),
               ),
               const Divider(),
               ListTile(
@@ -135,6 +142,7 @@ class _ManagerPageState extends State<ManagerPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Highlight card
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
                 padding: const EdgeInsets.all(16),
@@ -151,6 +159,8 @@ class _ManagerPageState extends State<ManagerPage> {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
               ),
+
+              // Row 1: Add Product / Product List
               Row(
                 children: [
                   _buildActionButton(
@@ -167,10 +177,35 @@ class _ManagerPageState extends State<ManagerPage> {
                   ),
                 ],
               ),
+
+              const SizedBox(height: 10),
+
+              // Row 2: Invoice List (added here)
+              Row(
+                children: [
+                  _buildActionButton(
+                    "Invoice List",
+                    Icons.receipt_long,
+                    Colors.indigo,
+                        () => _navigateToPage(InvoiceListPage(profile: widget.profile)),
+                  ),
+                  // Keep a placeholder for symmetry / future feature
+                  _buildActionButton(
+                    "Add Invoice",
+                    Icons.shopping_cart_checkout,
+                    Colors.teal,
+                        () => _showComingSoon("Add Invoice"),
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 20),
+
               const Text("Other Features",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
+
+              // Row 3: Other features
               Row(
                 children: [
                   _buildActionButton(
