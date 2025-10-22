@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'package:merchandise_management_system/models/product_model.dart';
 import 'package:merchandise_management_system/pages/manager_page.dart';
 import 'package:merchandise_management_system/pos/cart_page.dart';
@@ -6,8 +8,10 @@ import 'package:merchandise_management_system/pos/checkout_page.dart';
 import 'package:merchandise_management_system/pos/product_detail_page.dart';
 import 'package:merchandise_management_system/service/cart_service.dart';
 import 'package:merchandise_management_system/service/product_service.dart';
-import 'package:provider/provider.dart';
 
+// NEW: stock alerts
+import 'package:merchandise_management_system/service/stock_alert_service.dart';
+import 'package:merchandise_management_system/pos/stock_alert_page.dart';
 
 class ProductListPage extends StatefulWidget {
   final Map<String, dynamic> profile;
@@ -92,6 +96,45 @@ class _ProductListPageState extends State<ProductListPage>
           ),
           actions: [
             IconButton(icon: const Icon(Icons.refresh), onPressed: _refresh),
+
+            // NEW: stock alerts bell with badge
+            Builder(
+              builder: (context) {
+                final alerts = context.watch<StockAlertService>();
+                final badge = alerts.lowStock.length + alerts.fullStock.length;
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      tooltip: 'Stock alerts',
+                      icon: const Icon(Icons.notifications_none),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const StockAlertPage()),
+                      ),
+                    ),
+                    if (badge > 0)
+                      Positioned(
+                        right: 6,
+                        top: 6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '$badge',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 11),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+
+            // cart icon with badge
             Stack(
               clipBehavior: Clip.none,
               children: [
@@ -143,17 +186,18 @@ class _ProductListPageState extends State<ProductListPage>
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      fillColor: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest,
+                      contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12),
                     ),
                   ),
                 ),
                 TabBar(
                   controller: _tabController,
                   isScrollable: true,
-                  tabs: _cats
-                      .map((c) => Tab(text: c.name))
-                      .toList(),
+                  tabs: _cats.map((c) => Tab(text: c.name)).toList(),
                 ),
               ],
             ),
@@ -174,6 +218,14 @@ class _ProductListPageState extends State<ProductListPage>
                 ]);
               }
               final all = snap.data ?? [];
+
+              // NEW: keep stock alert service in sync with latest products
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  context.read<StockAlertService>().setProducts(all);
+                }
+              });
+
               final filtered = _applyFilters(all);
 
               if (filtered.isEmpty) {
@@ -183,12 +235,16 @@ class _ProductListPageState extends State<ProductListPage>
                 ]);
               }
 
+              final alerts = context.watch<StockAlertService>();
+
               return ListView.builder(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
                 itemCount: filtered.length,
                 itemBuilder: (context, i) {
                   final p = filtered[i];
                   final available = cart.availableStock(p);
+                  final isLow = alerts.isLow(p);
+                  final isFull = alerts.isFull(p);
 
                   return Card(
                     elevation: 2,
@@ -216,7 +272,9 @@ class _ProductListPageState extends State<ProductListPage>
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primaryContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Center(
@@ -225,7 +283,9 @@ class _ProductListPageState extends State<ProductListPage>
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
-                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
                                   ),
                                 ),
                               ),
@@ -248,16 +308,22 @@ class _ProductListPageState extends State<ProductListPage>
                                         ),
                                       ),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: Theme.of(context).colorScheme.secondaryContainer,
-                                          borderRadius: BorderRadius.circular(999),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .secondaryContainer,
+                                          borderRadius:
+                                          BorderRadius.circular(999),
                                         ),
                                         child: Text(
                                           p.category.name,
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSecondaryContainer,
                                           ),
                                         ),
                                       ),
@@ -267,7 +333,9 @@ class _ProductListPageState extends State<ProductListPage>
                                   Text(
                                     '${p.brand}${p.model == null || p.model!.isEmpty ? '' : ' • ${p.model}'}',
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -275,7 +343,9 @@ class _ProductListPageState extends State<ProductListPage>
                                     children: [
                                       Icon(Icons.inventory_2_outlined,
                                           size: 18,
-                                          color: Theme.of(context).colorScheme.primary),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary),
                                       const SizedBox(width: 6),
                                       Text('Stock: $available / ${p.quantity}'),
                                       const Spacer(),
@@ -288,7 +358,28 @@ class _ProductListPageState extends State<ProductListPage>
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 8),
+
+                                  // NEW: Low/Full chips
+                                  if (isLow || isFull)
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Chip(
+                                        label: Text(isLow ? 'Low' : 'Full'),
+                                        backgroundColor: (isLow
+                                            ? Colors.orange
+                                            : Colors.green)
+                                            .withOpacity(0.12),
+                                        labelStyle: TextStyle(
+                                          color: isLow
+                                              ? Colors.orange
+                                              : Colors.green,
+                                        ),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ),
+
+                                  const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
@@ -306,15 +397,30 @@ class _ProductListPageState extends State<ProductListPage>
                                       ),
                                       const SizedBox(width: 10),
                                       FilledButton.icon(
-                                        icon: const Icon(Icons.add_shopping_cart),
+                                        icon:
+                                        const Icon(Icons.add_shopping_cart),
                                         label: const Text('Add'),
                                         onPressed: !cart.canAdd(p)
                                             ? null
                                             : () {
-                                          context.read<CartService>().add(p);
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('${p.name} added to cart')),
-                                          );
+                                          context
+                                              .read<CartService>()
+                                              .add(p);
+
+                                          // Optional instant alert toasts:
+                                          if (alerts.isLow(p)) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(SnackBar(
+                                              content: Text(
+                                                  '⚠️ Low stock: ${p.name} (Qty ${p.quantity})'),
+                                            ));
+                                          }
+
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(
+                                            content: Text(
+                                                '${p.name} added to cart'),
+                                          ));
                                         },
                                       ),
                                     ],
@@ -354,7 +460,8 @@ class _ProductListPageState extends State<ProductListPage>
                     ? null
                     : () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CheckoutPage()),
+                    MaterialPageRoute(
+                        builder: (_) => const CheckoutPage()),
                   );
                 },
               ),

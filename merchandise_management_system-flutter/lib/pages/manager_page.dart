@@ -4,6 +4,7 @@ import 'package:merchandise_management_system/pages/manager_profile_page.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/pos/invoice_list_page.dart';
+import 'package:merchandise_management_system/pos/stock_alert_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
 
 class ManagerPage extends StatefulWidget {
@@ -218,7 +219,8 @@ class _ManagerPageState extends State<ManagerPage> {
                     "Low Stock",
                     Icons.warning_amber,
                     Colors.redAccent,
-                        () => _showComingSoon("Low Stock"),
+                        () => _navigateToPage(const StockAlertPage()),
+
                   ),
                 ],
               ),
