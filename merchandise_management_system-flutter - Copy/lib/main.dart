@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:merchandise_management_system/pages/welcome_page.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/registration_page.dart';
-
+import 'package:merchandise_management_system/pages/welcome_page.dart';
 import 'package:merchandise_management_system/service/cart_service.dart';
+import 'package:merchandise_management_system/service/stock_alert_service.dart';
 
 void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => CartService()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -23,16 +16,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // IMPORTANT: MaterialApp is below the providers
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (_) => const WelcomePage(),
-        '/login': (_) => const LoginPage(),
-        '/register': (_) => const Register(),
-        // ManagerPage/ProductListPage etc. are pushed with MaterialPageRoute elsewhere
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartService()),
+        ChangeNotifierProvider(create: (_) => StockAlertService(
+          // tweak defaults here if you want
+          defaultLowThreshold: 5,
+          defaultMaxCapacity: 100,
+        )),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const WelcomePage(),
+          '/login': (context) => const LoginPage(),
+          '/register': (context) => const Register(),
+        },
+      ),
     );
   }
 }

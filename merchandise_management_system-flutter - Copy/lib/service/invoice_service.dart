@@ -1,12 +1,24 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:merchandise_management_system/models/cart_line.dart';
+import 'package:merchandise_management_system/models/invoice_model.dart';
 
 class InvoiceService {
-  // For Android Emulator use: 'http://10.0.2.2:8085'
+  // If using Android emulator, prefer: http://10.0.2.2:8085
   static const String _base = 'http://localhost:8085';
   final _client = http.Client();
 
+  // GET all invoices
+  Future<List<Invoice>> getAllInvoices() async {
+    final res = await _client.get(Uri.parse('$_base/api/invoices'));
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load invoices: ${res.statusCode} ${res.body}');
+    }
+    final List<dynamic> data = jsonDecode(res.body);
+    return data.map((e) => Invoice.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  // POST create invoice (you already use this in checkout)
   Future<Map<String, dynamic>> createInvoice({
     required String name,
     String? email,
