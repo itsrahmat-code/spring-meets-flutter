@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
-import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
 
-
-
 class ManagerPage extends StatefulWidget {
   final Map<String, dynamic> profile;
-
   const ManagerPage({Key? key, required this.profile}) : super(key: key);
 
   @override
@@ -21,7 +16,6 @@ class ManagerPage extends StatefulWidget {
 class _ManagerPageState extends State<ManagerPage> {
   final AuthService _authService = AuthService();
 
-
   void _navigateToPage(Widget page) {
     Navigator.pop(context); // Close the drawer
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
@@ -29,10 +23,7 @@ class _ManagerPageState extends State<ManagerPage> {
 
   void _showComingSoon(String featureName) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$featureName feature coming soon!'),
-        duration: const Duration(seconds: 2),
-      ),
+      SnackBar(content: Text('$featureName feature coming soon!')),
     );
   }
 
@@ -49,9 +40,7 @@ class _ManagerPageState extends State<ManagerPage> {
             backgroundColor: color,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
       ),
@@ -68,7 +57,7 @@ class _ManagerPageState extends State<ManagerPage> {
     final String name = widget.profile['name'] ?? 'Manager';
     final String email = widget.profile['email'] ?? 'N/A';
 
-    const int demoSoldCount = 340; // 🔥 Fixed demo value for total sold
+    const int demoSoldCount = 340;
 
     return WillPopScope(
       onWillPop: () async {
@@ -79,10 +68,7 @@ class _ManagerPageState extends State<ManagerPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Manager Dashboard',
-            style: TextStyle(color: Colors.white),
-          ),
+          title: const Text('Manager Dashboard', style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.deepPurple,
           centerTitle: true,
           elevation: 4,
@@ -93,16 +79,12 @@ class _ManagerPageState extends State<ManagerPage> {
             children: [
               UserAccountsDrawerHeader(
                 decoration: const BoxDecoration(color: Colors.deepPurple),
-                accountName: Text(
-                  name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                accountName: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
                 accountEmail: Text(email),
                 currentAccountPicture: CircleAvatar(
                   backgroundImage: (photoUrl != null)
                       ? NetworkImage(photoUrl)
-                      : const AssetImage('assets/default_avatar.png')
-                  as ImageProvider,
+                      : const AssetImage('assets/default_avatar.png') as ImageProvider,
                 ),
               ),
               ListTile(
@@ -113,39 +95,34 @@ class _ManagerPageState extends State<ManagerPage> {
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('My Profile'),
-                onTap: () =>
-                    _navigateToPage(ManagerProfilePage(profile: widget.profile)),
+                onTap: () => _navigateToPage(ManagerProfilePage(profile: widget.profile)),
               ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.add_shopping_cart),
                 title: const Text('Add Product'),
-                onTap: () =>
-                    _navigateToPage(ProductAdd(profile: widget.profile)),
+                onTap: () => _navigateToPage(ProductAdd(profile: widget.profile)),
               ),
               ListTile(
                 leading: const Icon(Icons.list_alt),
                 title: const Text('Product List'),
-                onTap: () =>
-                    _navigateToPage(ProductListPage(profile: widget.profile)),
+                onTap: () => _navigateToPage(ProductListPage(profile: widget.profile)),
               ),
               ListTile(
                 leading: const Icon(Icons.receipt),
                 title: const Text('Invoice List'),
-                onTap: () => _navigateToPage(InvoiceListPage()),
+                onTap: () => _showComingSoon("Invoice List"),
               ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.deepOrange),
-                title: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.deepOrange),
-                ),
+                title: const Text('Logout', style: TextStyle(color: Colors.deepOrange)),
                 onTap: () async {
                   await _authService.logout();
+                  if (!mounted) return;
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (_) => LoginPage()),
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
                         (route) => false,
                   );
                 },
@@ -158,7 +135,6 @@ class _ManagerPageState extends State<ManagerPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 🎉 Motivational Message Block
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
                 padding: const EdgeInsets.all(16),
@@ -170,16 +146,12 @@ class _ManagerPageState extends State<ManagerPage> {
                 child: Text(
                   "🎉 Well done, $name!\n\n"
                       "📦 Last month, your shop sold a total of **$demoSoldCount** products.\n"
-                      "💰 We’ve made a great profit and you’ve earned a bonus for your amazing effort.\n\n"
-                      "🙌 Keep pushing boundaries and inspiring your team.\n"
-                      "Together, we will touch the sky!",
+                      "💰 Great profit and a bonus for your effort.\n\n"
+                      "🙌 Keep pushing boundaries!",
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
               ),
-
-              // Product Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildActionButton(
                     "Add Product",
@@ -195,37 +167,11 @@ class _ManagerPageState extends State<ManagerPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-
-              // Invoice Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildActionButton(
-                    "Invoice List",
-                    Icons.receipt,
-                    Colors.indigo,
-                        () => _navigateToPage(InvoiceListPage()),
-                  ),
-                  _buildActionButton(
-                    "Add Invoice",
-                    Icons.shopping_cart_checkout,
-                    Colors.teal,
-                        () => _navigateToPage(const InvoiceListPage()),
-                  ),
-                ],
-              ),
               const SizedBox(height: 20),
-
-              // Other Features
-              const Text(
-                "Other Features",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text("Other Features",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildActionButton(
                     "Sales Report",
@@ -243,7 +189,6 @@ class _ManagerPageState extends State<ManagerPage> {
               ),
               const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildActionButton(
                     "Important Contact",

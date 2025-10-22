@@ -1,6 +1,3 @@
- // File: lib/pos/product_detail_page.dart
-
-
 import 'package:flutter/material.dart';
 import 'package:merchandise_management_system/models/product_model.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
@@ -8,8 +5,7 @@ import 'package:merchandise_management_system/service/product_service.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final int productId;
-  // ******* Added profile parameter *******
-  final Map<String, dynamic>? profile; // Optional if not always used, but safe to include
+  final Map<String, dynamic>? profile;
 
   const ProductDetailPage({super.key, required this.productId, this.profile});
 
@@ -27,14 +23,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     _productFuture = _productService.getProductById(widget.productId);
   }
 
-  // Reload product data
   void _refreshProduct() {
     setState(() {
       _productFuture = _productService.getProductById(widget.productId);
     });
   }
 
-  // Handle product deletion
   Future<void> _deleteProduct() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -42,12 +36,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         title: const Text('Delete Product'),
         content: const Text('Are you sure you want to delete this product?'),
         actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete', style: TextStyle(color: Colors.red))),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
@@ -55,10 +48,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     if (confirmed == true) {
       try {
         await _productService.deleteProduct(widget.productId);
-        if (context.mounted) {
-          // Pop back to list page, signaling a successful action
-          Navigator.pop(context, true);
-        }
+        if (context.mounted) Navigator.pop(context, true);
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -79,7 +69,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             future: _productFuture,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                // Edit Button
                 return IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () async {
@@ -88,18 +77,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       MaterialPageRoute(
                         builder: (context) => ProductAdd(
                           productToEdit: snapshot.data!,
-                          profile: widget.profile!, // ******* Passing profile here *******
+                          profile: widget.profile ?? const {}, // safe default
                         ),
                       ),
                     );
-                    _refreshProduct(); // Refresh after returning from edit
+                    _refreshProduct();
                   },
                 );
               }
               return const SizedBox.shrink();
             },
           ),
-          // Delete Button
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.red),
             onPressed: _deleteProduct,
@@ -122,13 +110,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               children: <Widget>[
                 _buildDetailRow('ID', product.id.toString()),
                 _buildDetailRow('Name', product.name),
-                _buildDetailRow('Category', product.category.toShortString()),
+                // 🔧 Use .name instead of toShortString()
+                _buildDetailRow('Category', product.category.name),
                 _buildDetailRow('Brand', product.brand),
                 _buildDetailRow('Model', product.model ?? 'N/A'),
                 _buildDetailRow('Quantity', product.quantity.toString()),
-                _buildDetailRow('Price', '\$${product.price.toStringAsFixed(2)}'),
-                _buildDetailRow(
-                    'Total Value', '\$${product.totalPrice.toStringAsFixed(2)}'),
+                _buildDetailRow('Price', '৳${product.price.toStringAsFixed(2)}'),
+                _buildDetailRow('Total Value', '৳${product.totalPrice.toStringAsFixed(2)}'),
                 _buildDetailRow('Details', product.details ?? 'No details provided'),
               ],
             );
@@ -144,15 +132,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label:',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+          Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16),
-          ),
+          Text(value, style: const TextStyle(fontSize: 16)),
           const Divider(),
         ],
       ),
