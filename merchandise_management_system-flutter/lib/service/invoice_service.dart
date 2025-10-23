@@ -4,11 +4,12 @@ import 'package:merchandise_management_system/models/cart_line.dart';
 import 'package:merchandise_management_system/models/invoice_model.dart';
 
 class InvoiceService {
-  // If using Android emulator, prefer: http://10.0.2.2:8085
+  // For Android emulator use 10.0.2.2; for web/desktop keep localhost.
   static const String _base = 'http://localhost:8085';
+
+
   final _client = http.Client();
 
-  // GET all invoices
   Future<List<Invoice>> getAllInvoices() async {
     final res = await _client.get(Uri.parse('$_base/api/invoices'));
     if (res.statusCode != 200) {
@@ -18,7 +19,6 @@ class InvoiceService {
     return data.map((e) => Invoice.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  // POST create invoice (you already use this in checkout)
   Future<Map<String, dynamic>> createInvoice({
     required String name,
     String? email,
@@ -47,4 +47,29 @@ class InvoiceService {
     }
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
+
+  Future<void> sendReceipt({
+    required int invoiceId,
+    required String channel, // "EMAIL" or "SMS"
+    String? email,
+    String? phone,
+  }) async {
+    final payload = <String, dynamic>{
+      'channel': channel,
+      if (email != null && email.isNotEmpty) 'email': email,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+    };
+
+    final res = await _client.post(
+      Uri.parse('$_base/api/invoices/$invoiceId/send-receipt'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Send receipt failed (${res.statusCode}): ${res.body}');
+    }
+  }
+
+  void dispose() => _client.close();
 }

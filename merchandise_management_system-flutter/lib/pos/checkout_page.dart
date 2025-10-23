@@ -1,8 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:merchandise_management_system/pages/manager_page.dart';
 import 'package:provider/provider.dart';
 import 'package:printing/printing.dart';
-
 import 'package:merchandise_management_system/service/cart_service.dart';
 import 'package:merchandise_management_system/service/invoice_service.dart';
 import 'package:merchandise_management_system/models/invoice_model.dart';
@@ -23,8 +24,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final _discount = TextEditingController(text: '0');
   final _paid = TextEditingController();
 
-  bool _submitting = false;
   final _invoiceService = InvoiceService();
+  bool _submitting = false;
+
+  // Focus order for nicer keyboard next/submit flow
+  final _fEmail = FocusNode();
+  final _fPhone = FocusNode();
+  final _fDiscount = FocusNode();
+  final _fPaid = FocusNode();
 
   @override
   void dispose() {
@@ -33,7 +40,37 @@ class _CheckoutPageState extends State<CheckoutPage> {
     _phone.dispose();
     _discount.dispose();
     _paid.dispose();
+    _fEmail.dispose();
+    _fPhone.dispose();
+    _fDiscount.dispose();
+    _fPaid.dispose();
     super.dispose();
+  }
+
+  String _tk(num v) => '৳ ${v.toStringAsFixed(2)}';
+
+  double _parseMoney(String v) =>
+      double.tryParse(v.trim().replaceAll(',', '')) ?? 0.0;
+
+  /// Recompute derived amounts based on cart + inputs
+  ({double subtotal, double discount, double paid, double grandTotal, double due, double change})
+  _computeTotals(BuildContext context) {
+    final subtotal = context.select<CartService, double>((c) => c.totalAmount);
+    final discount = _parseMoney(_discount.text);
+    final paid = _parseMoney(_paid.text);
+    // Explicitly treat 0 as 0.0 or cast to double to ensure the clamp result is double
+    final grandTotal = (subtotal - discount).clamp(0.0, double.infinity);
+    final due = (grandTotal - paid).clamp(0.0, double.infinity);
+    final change = (paid - grandTotal).clamp(0.0, double.infinity);
+    return (
+    subtotal: subtotal,
+    discount: discount,
+    paid: paid,
+    // The variables are now doubles, matching the return type annotation
+    grandTotal: grandTotal,
+    due: due,
+    change: change
+    );
   }
 
   Future<void> _submit() async {
@@ -50,29 +87,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
     setState(() => _submitting = true);
 
     try {
-      final discount = double.tryParse(_discount.text.trim()) ?? 0.0;
-      final paid = double.tryParse(_paid.text.trim()) ?? 0.0;
+      final discount = _parseMoney(_discount.text);
+      final paid = _parseMoney(_paid.text);
 
-      // Create on server
       final resp = await _invoiceService.createInvoice(
         name: _name.text.trim(),
         email: _email.text.trim().isEmpty ? null : _email.text.trim(),
         phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
         discount: discount,
         paid: paid,
-        items: cart.items, // List<CartLine>
+        items: cart.items,
       );
 
-      // Parse the created invoice back into your model.
-      // Assumes you have Invoice.fromJson. If not, add it to your invoice_model.dart.
       final created = Invoice.fromJson(resp);
-
-      // Clear cart after success
       cart.clear();
-
       if (!mounted) return;
 
-      // Show success actions: Preview / Share / Print / View details / Done
       _showSuccessSheet(context, created);
     } catch (e) {
       if (!mounted) return;
@@ -84,16 +114,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  // ---- Success bottom sheet with PDF actions ----
-  void _showSuccessSheet(BuildContext context, Invoice inv) {
+  void _showSuccessSheet(BuildContext rootContext, Invoice inv) {
     showModalBottomSheet(
-      context: context,
+      context: rootContext,
       isScrollControlled: false,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -105,17 +134,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 Text(
                   'Invoice #${inv.invoiceNumber} created',
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
-                Text('Total: ৳ ${inv.total.toStringAsFixed(2)}'),
+                Text('Total: ${_tk(inv.total)}'),
                 const SizedBox(height: 14),
+
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.picture_as_pdf),
                         label: const Text('Preview'),
-                        onPressed: () => _openPreview(context, inv),
+                        onPressed: () => _openPreview(rootContext, inv),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -123,7 +154,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.share),
                         label: const Text('Share/Download'),
-                        onPressed: () => _sharePdf(context, inv),
+                        onPressed: () => _sharePdf(rootContext, inv),
                       ),
                     ),
                   ],
@@ -135,7 +166,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.print),
                         label: const Text('Print'),
-                        onPressed: () => _printPdf(context, inv),
+                        onPressed: () => _printPdf(rootContext, inv),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -144,12 +175,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         icon: const Icon(Icons.receipt_long),
                         label: const Text('View details'),
                         onPressed: () {
-                          Navigator.of(context).pop(); // close sheet
-                          Navigator.of(context).push(
+                          Navigator.of(sheetContext).pop(); // close sheet
+                          Navigator.of(rootContext).push(
                             MaterialPageRoute(
                               builder: (_) => InvoiceDetailPage(
                                 invoice: inv,
-                                profile: const {}, // pass profile if you have it here
+                                profile: const {},
                               ),
                             ),
                           );
@@ -158,11 +189,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        icon: const Icon(Icons.send),
+                        label: const Text('Send receipt'),
+                        onPressed: () => _askAndSendReceipt(rootContext, inv),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 6),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // close sheet
-                    Navigator.of(context).popUntil((route) => route.isFirst); // back to home/list
+                    Navigator.of(sheetContext).pop(); // close sheet
+                    Navigator.of(rootContext).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const ManagerPage(profile: {}),
+                      ),
+                          (route) => false,
+                    );
                   },
                   child: const Text('Done'),
                 ),
@@ -174,13 +222,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  // ---- PDF helpers (Preview / Share / Print) ----
-
   Future<Uint8List> _buildPdf(Invoice inv) => InvoicePdf.build(inv);
 
   Future<void> _openPreview(BuildContext context, Invoice inv) async {
     try {
-      // pre-build to catch exceptions
       await _buildPdf(inv);
       if (!mounted) return;
       Navigator.of(context).push(
@@ -203,10 +248,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Future<void> _sharePdf(BuildContext context, Invoice inv) async {
     try {
       final bytes = await _buildPdf(inv);
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: 'invoice_${inv.invoiceNumber}.pdf',
-      );
+      await Printing.sharePdf(bytes: bytes, filename: 'invoice_${inv.invoiceNumber}.pdf');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -226,73 +268,338 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final total = context.select<CartService, double>((c) => c.totalAmount);
+  Future<void> _askAndSendReceipt(BuildContext context, Invoice inv) async {
+    final emailCtrl = TextEditingController(text: inv.email ?? '');
+    final phoneCtrl = TextEditingController(text: inv.phone ?? '');
+    String channel = (emailCtrl.text.isNotEmpty) ? 'EMAIL' : 'SMS';
+    bool sending = false;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Checkout')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              Text(
-                'Cart total: ৳ ${total.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _name,
-                decoration: const InputDecoration(labelText: 'Customer Name *'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _email,
-                decoration: const InputDecoration(labelText: 'Email'),
-              ),
-              TextFormField(
-                controller: _phone,
-                decoration: const InputDecoration(labelText: 'Phone'),
-              ),
-              TextFormField(
-                controller: _discount,
-                decoration: const InputDecoration(labelText: 'Discount'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _paid,
-                decoration: const InputDecoration(labelText: 'Paid'),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  final paid = double.tryParse(v ?? '') ?? 0.0;
-                  if (paid < 0) return 'Invalid amount';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(builder: (ctx, setState) {
+          Future<void> doSend() async {
+            try {
+              setState(() => sending = true);
+              final svc = InvoiceService();
+
+              if (channel == 'SMS') {
+                if (phoneCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Phone required for SMS')),
+                  );
+                  return;
+                }
+                await svc.sendReceipt(
+                  invoiceId: inv.id!,
+                  channel: 'SMS',
+                  phone: phoneCtrl.text.trim(),
+                );
+              } else {
+                if (emailCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Email required for Email')),
+                  );
+                  return;
+                }
+                await svc.sendReceipt(
+                  invoiceId: inv.id!,
+                  channel: 'EMAIL',
+                  email: emailCtrl.text.trim(),
+                );
+              }
+
+              if (mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Receipt sent via $channel')),
+                );
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Send failed: $e')),
+              );
+            } finally {
+              setState(() => sending = false);
+            }
+          }
+
+          return AlertDialog(
+            title: const Text('Send digital receipt'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: channel,
+                  items: const [
+                    DropdownMenuItem(value: 'SMS', child: Text('SMS')),
+                    DropdownMenuItem(value: 'EMAIL', child: Text('Email')),
+                  ],
+                  onChanged: (v) => setState(() => channel = v ?? 'SMS'),
+                  decoration: const InputDecoration(labelText: 'Channel'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone (E.164, e.g. +8801...)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
               FilledButton.icon(
-                onPressed: _submitting ? null : _submit,
-                icon: _submitting
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                onPressed: sending ? null : doSend,
+                icon: sending
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.send),
-                label: const Text('Create Invoice'),
+                label: const Text('Send'),
               ),
             ],
+          );
+        });
+      },
+    );
+  }
+
+  InputDecoration _fieldDecoration(String label, {Widget? prefix}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: prefix,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      filled: true,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final itemsCount = context.select<CartService, int>((c) => c.items.length);
+
+    // live totals
+    final totals = _computeTotals(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Checkout'),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                onChanged: () => setState(() {}), // live totals refresh
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header card
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.shopping_bag_outlined, size: 28),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '$itemsCount item${itemsCount == 1 ? '' : 's'} • Subtotal ${_tk(totals.subtotal)}',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Customer info
+                    Text('Customer', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _name,
+                              textInputAction: TextInputAction.next,
+                              decoration: _fieldDecoration('Customer Name *', prefix: const Icon(Icons.person_outline)),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _email,
+                              focusNode: _fEmail,
+                              textInputAction: TextInputAction.next,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: _fieldDecoration('Email', prefix: const Icon(Icons.email_outlined)),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _phone,
+                              focusNode: _fPhone,
+                              textInputAction: TextInputAction.next,
+                              keyboardType: TextInputType.phone,
+                              decoration: _fieldDecoration('Phone', prefix: const Icon(Icons.phone_outlined)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Payment
+                    Text('Payment', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _discount,
+                              focusNode: _fDiscount,
+                              textInputAction: TextInputAction.next,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$'))],
+                              decoration: _fieldDecoration('Discount', prefix: const Icon(Icons.percent)),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _paid,
+                              focusNode: _fPaid,
+                              textInputAction: TextInputAction.done,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$'))],
+                              decoration: _fieldDecoration('Paid', prefix: const Icon(Icons.payments_outlined)),
+                              validator: (v) {
+                                final paid = _parseMoney(v ?? '');
+                                if (paid < 0) return 'Invalid amount';
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Totals
+                    Text('Totals', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            _totalRow('Subtotal', _tk(totals.subtotal)),
+                            _totalRow('Discount', '- ${_tk(totals.discount)}'),
+                            const Divider(),
+                            _totalRow('Grand Total', _tk(totals.grandTotal), isEmphasis: true),
+                            const SizedBox(height: 6),
+                            _totalRow('Paid', _tk(totals.paid)),
+                            const SizedBox(height: 2),
+                            if (totals.due > 0)
+                              _pillRow(Icons.error_outline, 'Due', _tk(totals.due), context, color: Colors.orange)
+                            else
+                              _pillRow(Icons.check_circle_outline, 'Change', _tk(totals.change), context, color: Colors.green),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 120), // space for bottom bar
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+
+          // Sticky bottom bar
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _submitting ? null : _submit,
+                    icon: _submitting
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.receipt_long),
+                    label: const Text('Create Invoice'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _totalRow(String label, String value, {bool isEmphasis = false}) {
+    final style = isEmphasis
+        ? const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)
+        : const TextStyle(fontSize: 16, fontWeight: FontWeight.w500);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: style)),
+          Text(value, style: style),
+        ],
+      ),
+    );
+  }
+
+  Widget _pillRow(IconData icon, String label, String value, BuildContext context, {required Color color}) {
+    final bg = color.withOpacity(0.12);
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+          ),
+          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+        ],
       ),
     );
   }
 }
 
-/// Tiny page to host PdfPreview with a normal AppBar.
-/// Works across mobile/web/desktop. On web, users can download from Preview.
 class _PreviewScaffold extends StatelessWidget {
   final String title;
   final String suggestedName;

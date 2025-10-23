@@ -109,7 +109,7 @@ class _ProductListPageState extends State<ProductListPage>
                       tooltip: 'Stock alerts',
                       icon: const Icon(Icons.notifications_none),
                       onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const StockAlertPage()),
+                        MaterialPageRoute(builder: (_) =>  StockAlertPage(profile: widget.profile)),
                       ),
                     ),
                     if (badge > 0)
