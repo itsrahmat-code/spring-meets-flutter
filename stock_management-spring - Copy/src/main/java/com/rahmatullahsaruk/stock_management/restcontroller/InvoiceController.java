@@ -7,11 +7,13 @@ import com.rahmatullahsaruk.stock_management.entity.InvoiceItem;
 import com.rahmatullahsaruk.stock_management.mapper.InvoiceMapper;
 import com.rahmatullahsaruk.stock_management.repository.InvoiceRepo;
 import com.rahmatullahsaruk.stock_management.service.InvoiceService;
+import com.twilio.exception.ApiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*")
@@ -19,18 +21,8 @@ import java.util.Optional;
 @RequestMapping("/api/invoices")
 public class InvoiceController {
 
-    @Autowired
-    private InvoiceService invoiceService;
-
-    @Autowired
-    private InvoiceRepo invoiceRepo;
-
-    // ✅ Create Invoice
-//    @PostMapping
-//    public ResponseEntity<InvoiceDTO> createInvoice(@RequestBody Invoice invoice) {
-//        Invoice saved = invoiceService.save(invoice);
-//        return ResponseEntity.ok(InvoiceMapper.toDTO(saved));
-//    }
+    @Autowired private InvoiceService invoiceService;
+    @Autowired private InvoiceRepo invoiceRepo;
 
     @PostMapping
     public ResponseEntity<InvoiceDTO> createInvoice(@RequestBody Invoice invoice) {
@@ -38,18 +30,25 @@ public class InvoiceController {
         return ResponseEntity.ok(InvoiceMapper.toDTO(saved));
     }
 
-
-
-
-    // ✅ Get All Invoices
-//    @GetMapping
-//    public ResponseEntity<List<InvoiceDTO>> getAllInvoices() {
-//        List<Invoice> invoices = invoiceService.getAll();
-//        List<InvoiceDTO> invoiceDTOs = invoices.stream()
-//                .map(InvoiceMapper::toDTO)
-//                .toList();
-//        return ResponseEntity.ok(invoiceDTOs);
-//    }
+    @PostMapping("/{id}/send-receipt")
+    public ResponseEntity<?> sendReceipt(@PathVariable Long id,
+                                         @RequestBody Map<String, String> payload) {
+        String channel = payload.getOrDefault("channel", "EMAIL");
+        String email   = payload.get("email");
+        String phone   = payload.get("phone");
+        try {
+            invoiceService.sendReceipt(id, channel, email, phone);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Bad request: " + e.getMessage());
+        } catch (ApiException e) { // Twilio error with a helpful message
+            return ResponseEntity.status(502).body("Twilio error: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("Server error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
 
     @GetMapping
     public ResponseEntity<List<InvoiceDTO>> getAllInvoices() {
@@ -58,8 +57,6 @@ public class InvoiceController {
         return ResponseEntity.ok(dtoList);
     }
 
-
-    // ✅ Get Invoice by ID
     @GetMapping("/{id}")
     public ResponseEntity<InvoiceDTO> getInvoiceById(@PathVariable Long id) {
         Optional<Invoice> invoiceOpt = invoiceService.getById(id);
@@ -68,48 +65,13 @@ public class InvoiceController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ✅ Update Invoice
-//    @PutMapping("/{id}")
-//    public ResponseEntity<InvoiceDTO> updateInvoice(@PathVariable Long id, @RequestBody Invoice invoiceDetails) {
-//        Optional<Invoice> optionalInvoice = invoiceRepo.findById(id);
-//
-//        if (optionalInvoice.isEmpty()) {
-//            return ResponseEntity.notFound().build();
-//        }
-//
-//        Invoice invoice = optionalInvoice.get();
-//
-//        // Update basic fields
-//        invoice.setName(invoiceDetails.getName());
-//        invoice.setEmail(invoiceDetails.getEmail());
-//        invoice.setPhone(invoiceDetails.getPhone());
-//        invoice.setDiscount(invoiceDetails.getDiscount());
-//        invoice.setPaid(invoiceDetails.getPaid());
-//        invoice.setInvoiceNumber(invoiceDetails.getInvoiceNumber());
-//
-//        // Clear old products and set new products, updating invoice ref
-//        invoice.getProducts().clear();
-//        if (invoiceDetails.getProducts() != null) {
-//            for (Product product : invoiceDetails.getProducts()) {
-//                product.setInvoice(invoice);
-//                invoice.getProducts().add(product);
-//            }
-//        }
-//
-//        // Recalculate totals
-//        invoice.calculateTotals();
-//
-//        Invoice updatedInvoice = invoiceRepo.save(invoice);
-//        return ResponseEntity.ok(InvoiceMapper.toDTO(updatedInvoice));
-//    }
-
     @PutMapping("/{id}")
-    public ResponseEntity<InvoiceDTO> updateInvoice(@PathVariable Long id, @RequestBody Invoice updatedData) {
+    public ResponseEntity<InvoiceDTO> updateInvoice(@PathVariable Long id,
+                                                    @RequestBody Invoice updatedData) {
         Optional<Invoice> opt = invoiceRepo.findById(id);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
 
         Invoice existing = opt.get();
-
         existing.setName(updatedData.getName());
         existing.setEmail(updatedData.getEmail());
         existing.setPhone(updatedData.getPhone());
@@ -118,9 +80,11 @@ public class InvoiceController {
         existing.setInvoiceNumber(updatedData.getInvoiceNumber());
 
         existing.getItems().clear();
-        for (InvoiceItem item : updatedData.getItems()) {
-            item.setInvoice(existing);
-            existing.getItems().add(item);
+        if (updatedData.getItems() != null) {
+            for (InvoiceItem item : updatedData.getItems()) {
+                item.setInvoice(existing);
+                existing.getItems().add(item);
+            }
         }
 
         existing.calculateTotals();
@@ -128,65 +92,18 @@ public class InvoiceController {
         return ResponseEntity.ok(InvoiceMapper.toDTO(saved));
     }
 
-
-
-
-//    {
-//        "name": "John Doe",
-//            "email": "john@example.com",
-//            "phone": "1234567890",
-//            "discount": 50,
-//            "paid": 950,
-//            "items": [
-//        {
-//            "product": {
-//            "id": 1
-//        },
-//            "quantity": 2,
-//                "priceAtSale": 500
-//        },
-//        {
-//            "product": {
-//            "id": 2
-//        },
-//            "quantity": 1,
-//                "priceAtSale": 300
-//        }
-//
-//  ]
-//    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // ✅ Delete Invoice
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteInvoice(@PathVariable Long id) {
-        if (!invoiceRepo.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
+        if (!invoiceRepo.existsById(id)) return ResponseEntity.notFound().build();
         invoiceRepo.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-    // dashboard sell summary
     @GetMapping("/sellsummary")
     public SalesSummaryDTO getSalesSummary() {
-        Double today = invoiceService.getTodaySales();
-        Double last7 = invoiceService.getLast7DaysSales();
+        Double today  = invoiceService.getTodaySales();
+        Double last7  = invoiceService.getLast7DaysSales();
         Double last30 = invoiceService.getLast30DaysSales();
-
         return new SalesSummaryDTO(today, last7, last30);
     }
 }

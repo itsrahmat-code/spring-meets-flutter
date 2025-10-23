@@ -219,7 +219,7 @@ class _ManagerPageState extends State<ManagerPage> {
                     "Low Stock",
                     Icons.warning_amber,
                     Colors.redAccent,
-                        () => _navigateToPage(const StockAlertPage()),
+                        () => _navigateToPage(StockAlertPage(profile:widget.profile)),
 
                   ),
                 ],
