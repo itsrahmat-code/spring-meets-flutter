@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:merchandise_management_system/models/product_model.dart';
 
 class ProductService {
-  // For Android Emulator use: 'http://10.0.2.2:8085'
+
   static const String _baseUrl = 'http://localhost:8085/api/product';
 
   Map<String, String> get _headers => {

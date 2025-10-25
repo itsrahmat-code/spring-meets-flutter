@@ -7,13 +7,11 @@ import com.rahmatullahsaruk.stock_management.entity.InvoiceItem;
 import com.rahmatullahsaruk.stock_management.mapper.InvoiceMapper;
 import com.rahmatullahsaruk.stock_management.repository.InvoiceRepo;
 import com.rahmatullahsaruk.stock_management.service.InvoiceService;
-import com.twilio.exception.ApiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*")
@@ -30,25 +28,7 @@ public class InvoiceController {
         return ResponseEntity.ok(InvoiceMapper.toDTO(saved));
     }
 
-    @PostMapping("/{id}/send-receipt")
-    public ResponseEntity<?> sendReceipt(@PathVariable Long id,
-                                         @RequestBody Map<String, String> payload) {
-        String channel = payload.getOrDefault("channel", "EMAIL");
-        String email   = payload.get("email");
-        String phone   = payload.get("phone");
-        try {
-            invoiceService.sendReceipt(id, channel, email, phone);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Bad request: " + e.getMessage());
-        } catch (ApiException e) { // Twilio error with a helpful message
-            return ResponseEntity.status(502).body("Twilio error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body("Server error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-        }
-    }
+    // Removed: /{id}/send-receipt endpoint and all Twilio/Gmail usage.
 
     @GetMapping
     public ResponseEntity<List<InvoiceDTO>> getAllInvoices() {

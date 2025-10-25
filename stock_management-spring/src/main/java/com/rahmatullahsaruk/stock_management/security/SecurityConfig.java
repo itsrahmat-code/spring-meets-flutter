@@ -51,7 +51,6 @@ public class SecurityConfig {
                                 "/api/brand/**",
                                 "/api/goods/**",
                                 "/api/invoices/**",
-                                "/api/invoices/{id}/send-receipt",
                                 "/api/invoiceitem/**",
                                 "/api/expense/**",
                                 "/api/returnproduct/**",
@@ -65,7 +64,7 @@ public class SecurityConfig {
                                 "/api/cashier/reg/**",
                                 "/api/cashier/profile/**",
                                 "/api/product/**",
-                                "/api/supplier/**",
+                                "/api/suppliers/**",
                                 "/images/**"
                         ).permitAll()
 

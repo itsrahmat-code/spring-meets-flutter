@@ -27,7 +27,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final _invoiceService = InvoiceService();
   bool _submitting = false;
 
-  // Focus order for nicer keyboard next/submit flow
+  // Focus order
   final _fEmail = FocusNode();
   final _fPhone = FocusNode();
   final _fDiscount = FocusNode();
@@ -48,17 +48,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   String _tk(num v) => '৳ ${v.toStringAsFixed(2)}';
+  double _parseMoney(String v) => double.tryParse(v.trim().replaceAll(',', '')) ?? 0.0;
 
-  double _parseMoney(String v) =>
-      double.tryParse(v.trim().replaceAll(',', '')) ?? 0.0;
-
-  /// Recompute derived amounts based on cart + inputs
   ({double subtotal, double discount, double paid, double grandTotal, double due, double change})
   _computeTotals(BuildContext context) {
     final subtotal = context.select<CartService, double>((c) => c.totalAmount);
     final discount = _parseMoney(_discount.text);
     final paid = _parseMoney(_paid.text);
-    // Explicitly treat 0 as 0.0 or cast to double to ensure the clamp result is double
     final grandTotal = (subtotal - discount).clamp(0.0, double.infinity);
     final due = (grandTotal - paid).clamp(0.0, double.infinity);
     final change = (paid - grandTotal).clamp(0.0, double.infinity);
@@ -66,7 +62,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     subtotal: subtotal,
     discount: discount,
     paid: paid,
-    // The variables are now doubles, matching the return type annotation
     grandTotal: grandTotal,
     due: due,
     change: change
@@ -189,18 +184,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.send),
-                        label: const Text('Send receipt'),
-                        onPressed: () => _askAndSendReceipt(rootContext, inv),
-                      ),
-                    ),
-                  ],
-                ),
+
                 const SizedBox(height: 6),
                 TextButton(
                   onPressed: () {
@@ -268,108 +252,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  Future<void> _askAndSendReceipt(BuildContext context, Invoice inv) async {
-    final emailCtrl = TextEditingController(text: inv.email ?? '');
-    final phoneCtrl = TextEditingController(text: inv.phone ?? '');
-    String channel = (emailCtrl.text.isNotEmpty) ? 'EMAIL' : 'SMS';
-    bool sending = false;
-
-    await showDialog(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setState) {
-          Future<void> doSend() async {
-            try {
-              setState(() => sending = true);
-              final svc = InvoiceService();
-
-              if (channel == 'SMS') {
-                if (phoneCtrl.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Phone required for SMS')),
-                  );
-                  return;
-                }
-                await svc.sendReceipt(
-                  invoiceId: inv.id!,
-                  channel: 'SMS',
-                  phone: phoneCtrl.text.trim(),
-                );
-              } else {
-                if (emailCtrl.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Email required for Email')),
-                  );
-                  return;
-                }
-                await svc.sendReceipt(
-                  invoiceId: inv.id!,
-                  channel: 'EMAIL',
-                  email: emailCtrl.text.trim(),
-                );
-              }
-
-              if (mounted) {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Receipt sent via $channel')),
-                );
-              }
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Send failed: $e')),
-              );
-            } finally {
-              setState(() => sending = false);
-            }
-          }
-
-          return AlertDialog(
-            title: const Text('Send digital receipt'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  value: channel,
-                  items: const [
-                    DropdownMenuItem(value: 'SMS', child: Text('SMS')),
-                    DropdownMenuItem(value: 'EMAIL', child: Text('Email')),
-                  ],
-                  onChanged: (v) => setState(() => channel = v ?? 'SMS'),
-                  decoration: const InputDecoration(labelText: 'Channel'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone (E.164, e.g. +8801...)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-              FilledButton.icon(
-                onPressed: sending ? null : doSend,
-                icon: sending
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.send),
-                label: const Text('Send'),
-              ),
-            ],
-          );
-        });
-      },
-    );
-  }
-
   InputDecoration _fieldDecoration(String label, {Widget? prefix}) {
     return InputDecoration(
       labelText: label,
@@ -382,8 +264,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   Widget build(BuildContext context) {
     final itemsCount = context.select<CartService, int>((c) => c.items.length);
-
-    // live totals
     final totals = _computeTotals(context);
 
     return Scaffold(
@@ -393,7 +273,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
       ),
       body: Column(
         children: [
-          // Content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),

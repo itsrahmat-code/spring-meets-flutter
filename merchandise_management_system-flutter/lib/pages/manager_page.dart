@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:merchandise_management_system/others_page/supplier_list_page.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
@@ -6,6 +7,9 @@ import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/pos/stock_alert_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
+
+// Keep only the service (no supplier_add_page import)
+import 'package:merchandise_management_system/service/supplier_api_service.dart';
 
 class ManagerPage extends StatefulWidget {
   final Map<String, dynamic> profile;
@@ -17,9 +21,10 @@ class ManagerPage extends StatefulWidget {
 
 class _ManagerPageState extends State<ManagerPage> {
   final AuthService _authService = AuthService();
+  final SupplierApiService _supplierApi = SupplierApiService();
 
   void _navigateToPage(Widget page) {
-    Navigator.pop(context); // Close the drawer
+    Navigator.pop(context);
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
@@ -46,9 +51,7 @@ class _ManagerPageState extends State<ManagerPage> {
             backgroundColor: color,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
       ),
@@ -59,8 +62,7 @@ class _ManagerPageState extends State<ManagerPage> {
   Widget build(BuildContext context) {
     final String baseUrl = "http://localhost:8085/images/roleManager/";
     final String? photoName = widget.profile['photo'];
-    final String? photoUrl =
-    (photoName != null && photoName.isNotEmpty) ? "$baseUrl$photoName" : null;
+    final String? photoUrl = (photoName != null && photoName.isNotEmpty) ? "$baseUrl$photoName" : null;
 
     final String name = widget.profile['name'] ?? 'Manager';
     final String email = widget.profile['email'] ?? 'N/A';
@@ -120,6 +122,12 @@ class _ManagerPageState extends State<ManagerPage> {
                 leading: const Icon(Icons.receipt_long),
                 title: const Text('Invoice List'),
                 onTap: () => _navigateToPage(InvoiceListPage(profile: widget.profile)),
+              ),
+              // Drawer: keep Suppliers only (Add Supplier removed)
+              ListTile(
+                leading: const Icon(Icons.groups_3),
+                title: const Text('Suppliers'),
+                onTap: () => _navigateToPage(SupplierListPage(api: _supplierApi)),
               ),
               const Divider(),
               ListTile(
@@ -181,7 +189,7 @@ class _ManagerPageState extends State<ManagerPage> {
 
               const SizedBox(height: 10),
 
-              // Row 2: Invoice List (added here)
+              // Row 2: Invoice List / Supplier List
               Row(
                 children: [
                   _buildActionButton(
@@ -190,12 +198,25 @@ class _ManagerPageState extends State<ManagerPage> {
                     Colors.indigo,
                         () => _navigateToPage(InvoiceListPage(profile: widget.profile)),
                   ),
-                  // Keep a placeholder for symmetry / future feature
                   _buildActionButton(
-                    "Add Invoice",
-                    Icons.shopping_cart_checkout,
+                    "Supplier List",
+                    Icons.groups_3,
                     Colors.teal,
-                        () => _showComingSoon("Add Invoice"),
+                        () => _navigateToPage(SupplierListPage(api: _supplierApi)),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // Row 3: Low Stock only (Add Supplier removed)
+              Row(
+                children: [
+                  _buildActionButton(
+                    "Stock Status",
+                    Icons.warning_amber,
+                    Colors.redAccent,
+                        () => _navigateToPage(StockAlertPage(profile: widget.profile)),
                   ),
                 ],
               ),
@@ -206,7 +227,6 @@ class _ManagerPageState extends State<ManagerPage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
 
-              // Row 3: Other features
               Row(
                 children: [
                   _buildActionButton(
@@ -216,23 +236,16 @@ class _ManagerPageState extends State<ManagerPage> {
                         () => _showComingSoon("Sales Report"),
                   ),
                   _buildActionButton(
-                    "Low Stock",
-                    Icons.warning_amber,
-                    Colors.redAccent,
-                        () => _navigateToPage(StockAlertPage(profile:widget.profile)),
-
+                    "Important Contact",
+                    Icons.contact_phone,
+                    Colors.blueGrey,
+                        () => _showComingSoon("Important Contact"),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  _buildActionButton(
-                    "Important Contact",
-                    Icons.contact_phone,
-                    Colors.blueGrey,
-                        () => _showComingSoon("Important Contact"),
-                  ),
                   _buildActionButton(
                     "System Info",
                     Icons.info,

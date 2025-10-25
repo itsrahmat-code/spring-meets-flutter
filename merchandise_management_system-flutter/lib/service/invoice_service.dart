@@ -7,7 +7,6 @@ class InvoiceService {
   // For Android emulator use 10.0.2.2; for web/desktop keep localhost.
   static const String _base = 'http://localhost:8085';
 
-
   final _client = http.Client();
 
   Future<List<Invoice>> getAllInvoices() async {
@@ -46,29 +45,6 @@ class InvoiceService {
       throw Exception('Invoice create failed (${res.statusCode}): ${res.body}');
     }
     return jsonDecode(res.body) as Map<String, dynamic>;
-  }
-
-  Future<void> sendReceipt({
-    required int invoiceId,
-    required String channel, // "EMAIL" or "SMS"
-    String? email,
-    String? phone,
-  }) async {
-    final payload = <String, dynamic>{
-      'channel': channel,
-      if (email != null && email.isNotEmpty) 'email': email,
-      if (phone != null && phone.isNotEmpty) 'phone': phone,
-    };
-
-    final res = await _client.post(
-      Uri.parse('$_base/api/invoices/$invoiceId/send-receipt'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(payload),
-    );
-
-    if (res.statusCode != 200) {
-      throw Exception('Send receipt failed (${res.statusCode}): ${res.body}');
-    }
   }
 
   void dispose() => _client.close();

@@ -1,18 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:merchandise_management_system/pos/product_edit_page.dart';
 import 'package:provider/provider.dart';
 
 import 'package:merchandise_management_system/models/product_model.dart';
 import 'package:merchandise_management_system/service/cart_service.dart';
+import 'package:merchandise_management_system/service/product_service.dart';
+
 
 class ProductDetailPage extends StatelessWidget {
   final Product product;
   final Map<String, dynamic> profile;
+  final ProductService api;
 
   const ProductDetailPage({
     super.key,
     required this.product,
     required this.profile,
+    required this.api,
   });
+
+  Future<void> _confirmAndDelete(BuildContext context) async {
+    if (product.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot delete: product has no ID')),
+      );
+      return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text(
+          'Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton.tonal(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    try {
+      await api.deleteProduct(product.id!);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Deleted "${product.name}"')),
+        );
+        Navigator.of(context).pop(true); // tell list: deleted
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _edit(BuildContext context) async {
+    final updated = await Navigator.of(context).push<Product>(
+      MaterialPageRoute(
+        builder: (_) => ProductEditPage(
+          original: product,
+          api: api,
+        ),
+      ),
+    );
+    if (updated != null && context.mounted) {
+      // Return the updated product to the list page
+      Navigator.of(context).pop(updated);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +87,41 @@ class ProductDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Product Details'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (v) {
+              if (v == 'edit') _edit(context);
+              if (v == 'delete') _confirmAndDelete(context);
+            },
+            itemBuilder: (ctx) => const [
+              PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_outlined),
+                    SizedBox(width: 8),
+                    Text('Edit'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Hero-ish header card
+          // Header card
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -92,6 +187,8 @@ class ProductDetailPage extends StatelessWidget {
             style: const TextStyle(fontSize: 15),
           ),
           const SizedBox(height: 24),
+
+          // Bottom actions
           Row(
             children: [
               Expanded(
@@ -114,6 +211,33 @@ class ProductDetailPage extends StatelessWidget {
                       SnackBar(content: Text('${product.name} added to cart')),
                     );
                   },
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Quick Edit / Delete buttons (optional)
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: () => _edit(context),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Edit'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                    foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                  onPressed: () => _confirmAndDelete(context),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Delete'),
                 ),
               ),
             ],

@@ -97,7 +97,7 @@ class _ProductListPageState extends State<ProductListPage>
           actions: [
             IconButton(icon: const Icon(Icons.refresh), onPressed: _refresh),
 
-            // NEW: stock alerts bell with badge
+            // Stock alerts bell with badge
             Builder(
               builder: (context) {
                 final alerts = context.watch<StockAlertService>();
@@ -109,7 +109,9 @@ class _ProductListPageState extends State<ProductListPage>
                       tooltip: 'Stock alerts',
                       icon: const Icon(Icons.notifications_none),
                       onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) =>  StockAlertPage(profile: widget.profile)),
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                StockAlertPage(profile: widget.profile)),
                       ),
                     ),
                     if (badge > 0)
@@ -152,11 +154,13 @@ class _ProductListPageState extends State<ProductListPage>
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle,
+                        color: Colors.red,
+                        shape: BoxShape.circle,
                       ),
                       child: Text(
                         '${cart.totalItems}',
-                        style: const TextStyle(color: Colors.white, fontSize: 11),
+                        style:
+                        const TextStyle(color: Colors.white, fontSize: 11),
                       ),
                     ),
                   ),
@@ -186,9 +190,8 @@ class _ProductListPageState extends State<ProductListPage>
                         borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest,
+                      fillColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
                       contentPadding:
                       const EdgeInsets.symmetric(horizontal: 12),
                     ),
@@ -219,7 +222,7 @@ class _ProductListPageState extends State<ProductListPage>
               }
               final all = snap.data ?? [];
 
-              // NEW: keep stock alert service in sync with latest products
+              // keep stock alert service in sync with latest products
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
                   context.read<StockAlertService>().setProducts(all);
@@ -246,6 +249,35 @@ class _ProductListPageState extends State<ProductListPage>
                   final isLow = alerts.isLow(p);
                   final isFull = alerts.isFull(p);
 
+                  Future<void> _openDetails() async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProductDetailPage(
+                          product: p,
+                          profile: widget.profile,
+                          api: _productService, // <-- pass API
+                        ),
+                      ),
+                    );
+
+                    // result protocol:
+                    // - true => deleted
+                    // - Product => updated product
+                    if (!mounted) return;
+
+                    if (result == true) {
+                      // Deleted
+                      await _refresh();
+                    } else if (result is Product) {
+                      // Updated -> patch in current view without refetch
+                      final idxAll = all.indexWhere((e) => e.id == result.id);
+                      if (idxAll != -1) {
+                        all[idxAll] = result;
+                      }
+                      setState(() {});
+                    }
+                  }
+
                   return Card(
                     elevation: 2,
                     margin: const EdgeInsets.only(bottom: 10),
@@ -254,14 +286,7 @@ class _ProductListPageState extends State<ProductListPage>
                     ),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ProductDetailPage(
-                            product: p,
-                            profile: widget.profile,
-                          ),
-                        ),
-                      ),
+                      onTap: _openDetails,
                       child: Padding(
                         padding: const EdgeInsets.all(14),
                         child: Row(
@@ -360,7 +385,7 @@ class _ProductListPageState extends State<ProductListPage>
                                   ),
                                   const SizedBox(height: 8),
 
-                                  // NEW: Low/Full chips
+                                  // Low/Full chips
                                   if (isLow || isFull)
                                     Align(
                                       alignment: Alignment.centerLeft,
@@ -386,14 +411,7 @@ class _ProductListPageState extends State<ProductListPage>
                                       OutlinedButton.icon(
                                         icon: const Icon(Icons.info_outline),
                                         label: const Text('Details'),
-                                        onPressed: () => Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => ProductDetailPage(
-                                              product: p,
-                                              profile: widget.profile,
-                                            ),
-                                          ),
-                                        ),
+                                        onPressed: _openDetails,
                                       ),
                                       const SizedBox(width: 10),
                                       FilledButton.icon(

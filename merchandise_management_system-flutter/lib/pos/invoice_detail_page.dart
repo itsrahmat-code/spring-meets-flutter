@@ -4,7 +4,6 @@ import 'package:printing/printing.dart';
 
 import 'package:merchandise_management_system/models/invoice_model.dart';
 import 'package:merchandise_management_system/pos/invoice_pdf.dart';
-import 'package:merchandise_management_system/service/invoice_service.dart';
 
 class InvoiceDetailPage extends StatelessWidget {
   final Invoice invoice;
@@ -72,108 +71,6 @@ class InvoiceDetailPage extends StatelessWidget {
     }
   }
 
-  Future<void> _askAndSendReceipt(BuildContext context) async {
-    final emailCtrl = TextEditingController(text: invoice.email ?? '');
-    final phoneCtrl = TextEditingController(text: invoice.phone ?? '');
-    String channel = (emailCtrl.text.isNotEmpty) ? 'EMAIL' : 'SMS';
-    bool sending = false;
-
-    await showDialog(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setState) {
-          Future<void> doSend() async {
-            try {
-              setState(() => sending = true);
-              final svc = InvoiceService();
-
-              if (channel == 'SMS') {
-                if (phoneCtrl.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Phone required for SMS')),
-                  );
-                  return;
-                }
-                await svc.sendReceipt(
-                  invoiceId: invoice.id!,
-                  channel: 'SMS',
-                  phone: phoneCtrl.text.trim(),
-                );
-              } else {
-                if (emailCtrl.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Email required for Email')),
-                  );
-                  return;
-                }
-                await svc.sendReceipt(
-                  invoiceId: invoice.id!,
-                  channel: 'EMAIL',
-                  email: emailCtrl.text.trim(),
-                );
-              }
-
-              if (context.mounted) {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Receipt sent via $channel')),
-                );
-              }
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Send failed: $e')),
-              );
-            } finally {
-              setState(() => sending = false);
-            }
-          }
-
-          return AlertDialog(
-            title: const Text('Send digital receipt'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  value: channel,
-                  items: const [
-                    DropdownMenuItem(value: 'SMS', child: Text('SMS')),
-                    DropdownMenuItem(value: 'EMAIL', child: Text('Email')),
-                  ],
-                  onChanged: (v) => setState(() => channel = v ?? 'SMS'),
-                  decoration: const InputDecoration(labelText: 'Channel'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone (E.164, e.g. +8801...)',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-              FilledButton.icon(
-                onPressed: sending ? null : doSend,
-                icon: sending
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.send),
-                label: const Text('Send'),
-              ),
-            ],
-          );
-        });
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final statusColor = invoice.isPaid ? Colors.green : Colors.orange;
@@ -199,11 +96,7 @@ class InvoiceDetailPage extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _askAndSendReceipt(context),
-        icon: const Icon(Icons.send),
-        label: const Text('Send receipt'),
-      ),
+      // Removed FAB that sent receipts
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
