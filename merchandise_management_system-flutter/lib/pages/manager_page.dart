@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:merchandise_management_system/others_page/add_expense_page.dart';
+import 'package:merchandise_management_system/others_page/expense_list_page.dart';
 import 'package:merchandise_management_system/others_page/supplier_list_page.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
@@ -7,8 +9,8 @@ import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/pos/stock_alert_page.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
+import 'package:merchandise_management_system/service/expense_service.dart';
 
-// Keep only the service (no supplier_add_page import)
 import 'package:merchandise_management_system/service/supplier_api_service.dart';
 
 class ManagerPage extends StatefulWidget {
@@ -22,6 +24,9 @@ class ManagerPage extends StatefulWidget {
 class _ManagerPageState extends State<ManagerPage> {
   final AuthService _authService = AuthService();
   final SupplierApiService _supplierApi = SupplierApiService();
+
+  // Expense service instance (now valid because baseUrl is optional)
+  final ExpenseService _expenseService = ExpenseService();
 
   void _navigateToPage(Widget page) {
     Navigator.pop(context);
@@ -123,12 +128,28 @@ class _ManagerPageState extends State<ManagerPage> {
                 title: const Text('Invoice List'),
                 onTap: () => _navigateToPage(InvoiceListPage(profile: widget.profile)),
               ),
-              // Drawer: keep Suppliers only (Add Supplier removed)
               ListTile(
                 leading: const Icon(Icons.groups_3),
                 title: const Text('Suppliers'),
                 onTap: () => _navigateToPage(SupplierListPage(api: _supplierApi)),
               ),
+
+              // Expenses in drawer
+              ListTile(
+                leading: const Icon(Icons.payments),
+                title: const Text('Expense List'),
+                onTap: () => _navigateToPage(
+                  ExpenseListPage(service: _expenseService, profile: widget.profile),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.add_card),
+                title: const Text('Add Expense'),
+                onTap: () => _navigateToPage(
+                  AddExpensePage(service: _expenseService, profile: widget.profile),
+                ),
+              ),
+
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.deepOrange),
@@ -209,7 +230,7 @@ class _ManagerPageState extends State<ManagerPage> {
 
               const SizedBox(height: 10),
 
-              // Row 3: Low Stock only (Add Supplier removed)
+              // Row 3: Stock Status
               Row(
                 children: [
                   _buildActionButton(
@@ -227,23 +248,31 @@ class _ManagerPageState extends State<ManagerPage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
 
+              // Quick actions for expenses
               Row(
                 children: [
                   _buildActionButton(
-                    "Sales Report",
-                    Icons.bar_chart,
+                    "Add Expense",
+                    Icons.add_card,
                     Colors.orange,
-                        () => _showComingSoon("Sales Report"),
+                        () => _navigateToPage(
+                      AddExpensePage(service: _expenseService, profile: widget.profile),
+                    ),
                   ),
                   _buildActionButton(
-                    "Important Contact",
-                    Icons.contact_phone,
+                    "Expense List",
+                    Icons.payments,
                     Colors.blueGrey,
-                        () => _showComingSoon("Important Contact"),
+                        () => _navigateToPage(
+                      ExpenseListPage(service: _expenseService, profile: widget.profile),
+                    ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 10),
+
+              // Placeholder
               Row(
                 children: [
                   _buildActionButton(
