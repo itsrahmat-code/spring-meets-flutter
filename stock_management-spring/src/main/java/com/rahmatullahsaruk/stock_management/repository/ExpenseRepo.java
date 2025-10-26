@@ -6,25 +6,29 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface ExpenseRepo extends JpaRepository<Expense, Long> {
 
+    // Monthly sums within a datetime range
     @Query("""
-      SELECT EXTRACT(MONTH FROM i.date) AS m, COALESCE(SUM(i.total), 0)
-      FROM Invoice i
-      WHERE i.date BETWEEN :start AND :end
-      GROUP BY EXTRACT(MONTH FROM i.date)
-      ORDER BY m
-      """)
-    List<Object[]> sumByMonthBetween(LocalDate start, LocalDate end);
+           SELECT MONTH(e.date) AS m, COALESCE(SUM(e.amount), 0)
+           FROM Expense e
+           WHERE e.date BETWEEN :start AND :end
+           GROUP BY MONTH(e.date)
+           ORDER BY MONTH(e.date)
+           """)
+    List<Object[]> sumByMonthBetween(@Param("start") LocalDateTime start,
+                                     @Param("end") LocalDateTime end);
 
+    // Total expenses within a datetime range
     @Query("""
-      SELECT COALESCE(SUM(i.total), 0)
-      FROM Invoice i
-      WHERE i.date BETWEEN :start AND :end
-      """)
-    Double sumTotalBetween(LocalDate start, LocalDate end);
+           SELECT COALESCE(SUM(e.amount), 0)
+           FROM Expense e
+           WHERE e.date BETWEEN :start AND :end
+           """)
+    Double getExpensesBetween(@Param("start") LocalDateTime start,
+                              @Param("end") LocalDateTime end);
 }
-

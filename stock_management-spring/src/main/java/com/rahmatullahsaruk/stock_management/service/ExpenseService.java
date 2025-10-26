@@ -5,6 +5,7 @@ import com.rahmatullahsaruk.stock_management.repository.ExpenseRepo;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,22 +47,29 @@ public class ExpenseService {
         expenseRepository.deleteById(id);
     }
 
-    // Aggregations (all Double for consistency with entity/repo)
+    // ---- Aggregations ----
+
     public Double getTodayExp() {
         LocalDate today = LocalDate.now();
-        return coalesce(expenseRepository.sumByDateBetween(today, today));
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end   = today.atTime(23, 59, 59);
+        return coalesce(expenseRepository.getExpensesBetween(start, end));
     }
 
     public Double getLast7DaysExp() {
-        LocalDate end = LocalDate.now();
-        LocalDate start = end.minusDays(6); // inclusive range of 7 days
-        return coalesce(expenseRepository.sumByDateBetween(start, end));
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(6); // inclusive: 7 days total
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end   = endDate.atTime(23, 59, 59);
+        return coalesce(expenseRepository.getExpensesBetween(start, end));
     }
 
     public Double getLast30DaysExp() {
-        LocalDate end = LocalDate.now();
-        LocalDate start = end.minusDays(29); // inclusive range of 30 days
-        return coalesce(expenseRepository.sumByDateBetween(start, end));
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(29); // inclusive: 30 days total
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end   = endDate.atTime(23, 59, 59);
+        return coalesce(expenseRepository.getExpensesBetween(start, end));
     }
 
     private Double coalesce(Double v) {

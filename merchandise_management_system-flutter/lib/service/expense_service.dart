@@ -8,8 +8,6 @@ class ExpenseService {
 
   final String baseUrl;
 
-  /// Make baseUrl OPTIONAL so callers can just do `ExpenseService()`.
-  /// You can still override it: ExpenseService(baseUrl: 'http://10.0.2.2:8085')
   ExpenseService({String? baseUrl}) : baseUrl = baseUrl ?? _base;
 
   String get _resource => '$baseUrl/api/expenses';

@@ -66,7 +66,8 @@ public class SecurityConfig {
                                 "/api/product/**",
                                 "/api/suppliers/**",
                                 "/images/**",
-                                "/api/expenses/**"
+                                "/api/expenses/**",
+                                "/api/analytics/**"
                         ).permitAll()
 
 //                        .authorizeHttpRequests(req -> req

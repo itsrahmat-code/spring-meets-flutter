@@ -1,16 +1,22 @@
+// lib/pages/manager_page.dart
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import 'package:merchandise_management_system/others_page/add_expense_page.dart';
 import 'package:merchandise_management_system/others_page/expense_list_page.dart';
 import 'package:merchandise_management_system/others_page/supplier_list_page.dart';
 import 'package:merchandise_management_system/pages/login_page.dart';
 import 'package:merchandise_management_system/pages/manager_profile_page.dart';
+import 'package:merchandise_management_system/pages/profit_dashboard_page.dart';
 import 'package:merchandise_management_system/pos/add_product.dart';
 import 'package:merchandise_management_system/pos/product_list_page.dart';
 import 'package:merchandise_management_system/pos/invoice_list_page.dart';
 import 'package:merchandise_management_system/pos/stock_alert_page.dart';
+
+import 'package:merchandise_management_system/service/analytics_service.dart';
 import 'package:merchandise_management_system/service/authservice.dart';
 import 'package:merchandise_management_system/service/expense_service.dart';
-
+import 'package:merchandise_management_system/service/invoice_service.dart';
 import 'package:merchandise_management_system/service/supplier_api_service.dart';
 
 class ManagerPage extends StatefulWidget {
@@ -21,12 +27,45 @@ class ManagerPage extends StatefulWidget {
   State<ManagerPage> createState() => _ManagerPageState();
 }
 
+// ---------- PROFIT SUPPORT ----------
+
+enum ProfitRange { today, month }
+
+class ProfitSummary {
+  final double sales;     // from invoices (sum of totals)
+  final double collected; // sum of paid amounts
+  final double expenses;  // from ExpenseService
+  const ProfitSummary({
+    required this.sales,
+    required this.collected,
+    required this.expenses,
+  });
+
+  double get profitOnSales => sales - expenses;
+  double get profitOnCollected => collected - expenses;
+}
+
+// ------------------------------------
+
 class _ManagerPageState extends State<ManagerPage> {
+  // Services
   final AuthService _authService = AuthService();
   final SupplierApiService _supplierApi = SupplierApiService();
-
-  // Expense service instance (now valid because baseUrl is optional)
   final ExpenseService _expenseService = ExpenseService();
+  final InvoiceService _invoiceService = InvoiceService();
+
+  // Profit state
+  ProfitRange _range = ProfitRange.month;
+  late Future<ProfitSummary> _profitFuture;
+  final _money = NumberFormat('#,##0.00');
+
+  @override
+  void initState() {
+    super.initState();
+    _profitFuture = _loadProfitSummary();
+  }
+
+  // ---------- NAV & HELPERS ----------
 
   void _navigateToPage(Widget page) {
     Navigator.pop(context);
@@ -38,6 +77,147 @@ class _ManagerPageState extends State<ManagerPage> {
       SnackBar(content: Text('$featureName feature coming soon!')),
     );
   }
+
+  // ---------- PROFIT CALCULATION ----------
+
+  Future<ProfitSummary> _loadProfitSummary() async {
+    final now = DateTime.now();
+    late DateTime start, end;
+
+    if (_range == ProfitRange.today) {
+      start = DateTime(now.year, now.month, now.day);
+      end = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+    } else {
+      start = DateTime(now.year, now.month, 1);
+      // end-of-month (day 0 of next month)
+      end = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
+    }
+
+    final invoices = await _invoiceService.getAllInvoices();
+    final expenses = await _expenseService.getAll();
+
+    bool within(DateTime? d) =>
+        d != null && !d.isBefore(start) && !d.isAfter(end);
+
+    final filteredInvoices = invoices.where((i) => within(i.date)).toList();
+    final filteredExpenses = expenses.where((e) => within(e.date)).toList();
+
+    final sales = filteredInvoices.fold<double>(0, (a, b) => a + b.total);
+    final collected = filteredInvoices.fold<double>(0, (a, b) => a + b.paid);
+    final expenseSum = filteredExpenses.fold<double>(0, (a, b) => a + b.amount);
+
+    return ProfitSummary(sales: sales, collected: collected, expenses: expenseSum);
+  }
+
+  Widget _profitCard(ProfitSummary s) {
+    final pSales = s.profitOnSales;
+    final pCollected = s.profitOnCollected;
+    final pos = (pSales >= 0);
+
+    final trend = pos ? Colors.green : Colors.redAccent;
+    final title = _range == ProfitRange.today ? 'Today' : 'This Month';
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text('Profit — $title',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const Spacer(),
+                SegmentedButton<ProfitRange>(
+                  segments: const [
+                    ButtonSegment(value: ProfitRange.today, label: Text('Today')),
+                    ButtonSegment(value: ProfitRange.month, label: Text('Month')),
+                  ],
+                  selected: {_range},
+                  onSelectionChanged: (sel) {
+                    setState(() {
+                      _range = sel.first;
+                      _profitFuture = _loadProfitSummary();
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Refresh',
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => setState(() {
+                    _profitFuture = _loadProfitSummary();
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _metricTile('Sales', '৳ ${_money.format(s.sales)}')),
+                Expanded(child: _metricTile('Expenses', '৳ ${_money.format(s.expenses)}')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _pill(
+                    label: 'Profit (Sales - Expenses)',
+                    value: '৳ ${_money.format(pSales)}',
+                    color: trend,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _pill(
+                    label: 'Profit (Collected - Expenses)',
+                    value: '৳ ${_money.format(pCollected)}',
+                    color: (pCollected >= 0) ? Colors.green : Colors.redAccent,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _metricTile(String title, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(color: Colors.black54)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+      ],
+    );
+  }
+
+  Widget _pill({required String label, required String value, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: color.withOpacity(0.9))),
+          const SizedBox(height: 2),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  // ---------- UI HELPERS ----------
 
   Widget _buildActionButton(
       String label,
@@ -63,11 +243,14 @@ class _ManagerPageState extends State<ManagerPage> {
     );
   }
 
+  // ---------- BUILD ----------
+
   @override
   Widget build(BuildContext context) {
-    final String baseUrl = "http://localhost:8085/images/roleManager/";
+    const String baseUrl = "http://localhost:8085/images/roleManager/";
     final String? photoName = widget.profile['photo'];
-    final String? photoUrl = (photoName != null && photoName.isNotEmpty) ? "$baseUrl$photoName" : null;
+    final String? photoUrl =
+    (photoName != null && photoName.isNotEmpty) ? "$baseUrl$photoName" : null;
 
     final String name = widget.profile['name'] ?? 'Manager';
     final String email = widget.profile['email'] ?? 'N/A';
@@ -94,7 +277,8 @@ class _ManagerPageState extends State<ManagerPage> {
             children: [
               UserAccountsDrawerHeader(
                 decoration: const BoxDecoration(color: Colors.deepPurple),
-                accountName: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                accountName:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
                 accountEmail: Text(email),
                 currentAccountPicture: CircleAvatar(
                   backgroundImage: (photoUrl != null)
@@ -133,8 +317,6 @@ class _ManagerPageState extends State<ManagerPage> {
                 title: const Text('Suppliers'),
                 onTap: () => _navigateToPage(SupplierListPage(api: _supplierApi)),
               ),
-
-              // Expenses in drawer
               ListTile(
                 leading: const Icon(Icons.payments),
                 title: const Text('Expense List'),
@@ -149,7 +331,23 @@ class _ManagerPageState extends State<ManagerPage> {
                   AddExpensePage(service: _expenseService, profile: widget.profile),
                 ),
               ),
-
+              ListTile(
+                leading: const Icon(Icons.bar_chart),
+                title: const Text('Profit Analytics'),
+                onTap: () {
+                  final analytics =
+                  AnalyticsService(baseUrl: 'http://localhost:8085/api/analytics');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProfitDashboardPage(
+                        profile: widget.profile,
+                        analytics: analytics,
+                      ),
+                    ),
+                  );
+                },
+              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.deepOrange),
@@ -172,7 +370,44 @@ class _ManagerPageState extends State<ManagerPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Highlight card
+              // ---------- PROFIT CARD (FutureBuilder) ----------
+              FutureBuilder<ProfitSummary>(
+                future: _profitFuture,
+                builder: (context, snap) {
+                  if (snap.connectionState != ConnectionState.done) {
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: const [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 12),
+                            Text('Calculating profit...'),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  if (snap.hasError) {
+                    return Card(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text('Failed to load profit: ${snap.error}'),
+                      ),
+                    );
+                  }
+                  return _profitCard(snap.data!);
+                },
+              ),
+
+              // ---------- HIGHLIGHT CARD ----------
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
                 padding: const EdgeInsets.all(16),
@@ -186,11 +421,12 @@ class _ManagerPageState extends State<ManagerPage> {
                       "📦 Last month, your shop sold a total of **$demoSoldCount** products.\n"
                       "💰 Great profit and a bonus for your effort.\n\n"
                       "🙌 Keep pushing boundaries!",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
               ),
 
-              // Row 1: Add Product / Product List
+              // ---------- QUICK ACTIONS ----------
               Row(
                 children: [
                   _buildActionButton(
@@ -207,10 +443,7 @@ class _ManagerPageState extends State<ManagerPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
-
-              // Row 2: Invoice List / Supplier List
               Row(
                 children: [
                   _buildActionButton(
@@ -227,10 +460,7 @@ class _ManagerPageState extends State<ManagerPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
-
-              // Row 3: Stock Status
               Row(
                 children: [
                   _buildActionButton(
@@ -241,14 +471,10 @@ class _ManagerPageState extends State<ManagerPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
-
               const Text("Other Features",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-
-              // Quick actions for expenses
               Row(
                 children: [
                   _buildActionButton(
@@ -269,10 +495,7 @@ class _ManagerPageState extends State<ManagerPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
-
-              // Placeholder
               Row(
                 children: [
                   _buildActionButton(
