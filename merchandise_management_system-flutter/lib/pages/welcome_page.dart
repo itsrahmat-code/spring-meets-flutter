@@ -21,7 +21,7 @@ class WelcomePage extends StatelessWidget {
 
                 // 🔷 App Logo
                 Image.asset(
-                  'assets/img/logo.png',
+                  'assets/img/log.png',
                   height: 180,
                   fit: BoxFit.contain,
                 ),
@@ -30,7 +30,7 @@ class WelcomePage extends StatelessWidget {
 
                 // 🔷 Title
                 Text(
-                  'Inventory Management System',
+                  'Merchandise Management System',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 26,
