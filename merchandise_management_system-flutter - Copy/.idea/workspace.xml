@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d181bc6f-43e0-4b48-bc43-824db57299a8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/lib/entity/invoice.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/entity/invoice.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/entity/product.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/entity/product.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/pages/manager_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/pages/manager_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/pos/add_product.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/pos/add_product.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/pos/product_detail_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/pos/product_detail_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/pos/product_list_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/pos/product_list_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/service/dashboardservice.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/service/dashboardservice.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/service/invoice_service.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/service/invoice_service.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/windows/flutter/generated_plugin_registrant.cc" beforeDir="false" afterPath="$PROJECT_DIR$/windows/flutter/generated_plugin_registrant.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/windows/flutter/generated_plugin_registrant.h" beforeDir="false" afterPath="$PROJECT_DIR$/windows/flutter/generated_plugin_registrant.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/windows/flutter/generated_plugins.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/windows/flutter/generated_plugins.cmake" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="34Gyl2HZpT6zZ6sTXqoy1GaJPEa" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Flutter.main.dart.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "main",
+    "io.flutter.reload.alreadyRun": "true",
+    "last_opened_file_path": "C:/Users/SARUK/CODE/spring-meets-flutter/merchandise_management_system-flutter",
+    "show.migrate.to.gradle.popup": "false"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="main.dart" type="FlutterRunConfigurationType" factoryName="Flutter">
+      <option name="additionalArgs" value="--web-port=50100" />
+      <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d181bc6f-43e0-4b48-bc43-824db57299a8" name="Changes" comment="" />
+      <created>1760854353130</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1760854353130</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="Dart">
+          <url>file://$PROJECT_DIR$/lib/pages/login_page.dart</url>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="Dart">
+          <url>file://$PROJECT_DIR$/lib/pos/add_invoice.dart</url>
+          <line>2</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
