@@ -5,91 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d181bc6f-43e0-4b48-bc43-824db57299a8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../Project_Flutter/merchandise_management_system-flutter/lib/pos/add_product.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../Project_Flutter/merchandise_management_system-flutter/lib/pos/add_product.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project_Flutter/stock_management-spring/src/main/java/com/rahmatullahsaruk/stock_management/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Project_Flutter/stock_management-spring/src/main/java/com/rahmatullahsaruk/stock_management/security/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project_Flutter/stock_management-spring/src/main/java/com/rahmatullahsaruk/stock_management/security/TwilioConfig.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/application.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/StockManagementApplication.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/config/WebConfig.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/AdminDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/AuthDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/CashierDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/InvoiceDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/InvoiceItemDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/ManagerDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/ProductDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/SalesSummaryDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/dto/UserDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Admin.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Cashier.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Employee.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Invoice.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/InvoiceItem.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Manager.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Product$Category.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Product.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Role.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/Token.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/entity/User.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/jwt/JwtAuthFilter.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/jwt/JwtService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/mapper/InvoiceItemMapper.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/mapper/InvoiceMapper.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/mapper/ProductMapper.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/AdminRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/CashierRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/EmployeeRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/InvoiceItemRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/InvoiceRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/ManagerRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/ProductRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/TokenRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/repository/UserRepo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/restcontroller/AdminController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/restcontroller/AuthController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/restcontroller/CashierController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/restcontroller/EmployeeController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/restcontroller/InvoiceController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/restcontroller/InvoiceItemController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/restcontroller/ManagerController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/restcontroller/ProductController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/security/SecurityConfig.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/AdminService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/AuthService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/CashierService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/EmailService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/EmployeeService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/InvoiceItemService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/InvoiceService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/ManagerService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/ProductService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/com/rahmatullahsaruk/stock_management/service/UserService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/admin/Admin_24adb263-9562-44b3-8488-42992855a0e9" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/admin/Admin_3aaca7a8-8e4c-417f-94d5-fe4a6ea51925" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/admin/Admin_89c7f359-4399-4363-ae77-c8b156e7a0dd" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/Manager_02e4b642-6568-4e55-a3e7-6d49888801e5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/Manager_af4407c7-e91f-4cb4-ac80-30133c198c4f" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/Rahmat_5d8bcef3-5b82-4040-8ff6-e717701e0cb8" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/Rahmat_Ullah_dd85dc69-b35d-46f9-a8c1-cdd2dc235cf1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/Rahtmat_b2d2efe2-93e6-4dbc-b16f-2797387052cb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/adsd_7d6097f1-7330-470d-a5f5-9a102f594d75" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/manager2_c4be7882-b511-443b-bdc0-bf07361e2d6f" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/manager_7bb796e4-b390-4092-a91c-a014d0b17026" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/manager_b1f7a301-4111-419b-8a81-95ff1808b6be" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/rahmat_19e770a8-dad1-4e10-ac9a-2581e2204cc1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/roleManager/rahmat_45c9f288-2827-4e79-8c52-d0dc2841708f" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/Admin_271f79bf-2ada-4bf8-b818-a5230f68bc44" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/Admin_6a3aca24-39ca-4e0e-a78f-807f547fc3b1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/Admin_99a02cbe-dd59-4f58-927c-09f6f3867ce2" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/Manager_4a05352a-29b6-4f85-b224-4d5e66da669a" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/Manager_51d7079e-5922-4a3b-908e-2e6ebc6fc2a7" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/Rahmat Ullah_3645830f-984a-4561-857c-4befd545193f" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/Rahmat_d718bfd9-f720-4a4d-94e4-12036ae4fef5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/Rahtmat_24c5e08a-bacc-4a27-8cc5-60f24d0e2aa9" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/adsd_519d9c7f-9cfe-4c37-bafe-d087ff7a7ffd" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/manager2_8f873574-5dbb-40f1-aafc-60ca9608ad77" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/manager_77381ecc-af89-44a7-81ad-869bf9e0b741" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/manager_a92fc927-0245-492f-919f-1e8917598938" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/rahmat_11a2340b-8eab-4a3f-9564-c18d8bdbe4fa" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../stock_management-spring/target/classes/static/images/users/rahmat_b6a81469-c7ff-4ef6-a924-66b141a649f1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../stock_management-spring/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../stock_management-spring/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
