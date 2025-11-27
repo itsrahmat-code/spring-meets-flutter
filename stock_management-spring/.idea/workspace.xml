@@ -5,11 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1b5d1b2a-9868-41a5-8693-c2ea522eb170" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../Project_Flutter/merchandise_management_system-flutter/lib/pos/add_product.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../Project_Flutter/merchandise_management_system-flutter/lib/pos/add_product.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Project_Flutter/stock_management-spring/src/main/java/com/rahmatullahsaruk/stock_management/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Project_Flutter/stock_management-spring/src/main/java/com/rahmatullahsaruk/stock_management/security/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Project_Flutter/stock_management-spring/src/main/java/com/rahmatullahsaruk/stock_management/security/TwilioConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../merchandise_management_system-flutter/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../merchandise_management_system-flutter/.idea/caches/deviceStreaming.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../merchandise_management_system-flutter/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../merchandise_management_system-flutter/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
